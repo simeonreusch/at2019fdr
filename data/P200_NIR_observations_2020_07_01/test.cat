@@ -1,0 +1,6 @@
+#   1 X_IMAGE                Object position along x                                    [pixel]
+#   2 Y_IMAGE                Object position along y                                    [pixel]
+#   3 MAG_BEST               Best of MAG_AUTO and MAG_ISOCOR                            [mag]
+#   4 MAGERR_BEST            RMS error for MAG_BEST                                     [mag]
+#   5 MAG_APER               Fixed aperture magnitude vector                            [mag]
+#   6 MAGERR_APER            RMS error vector for fixed aperture mag.                   [mag]

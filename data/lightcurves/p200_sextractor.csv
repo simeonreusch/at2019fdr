@@ -1,0 +1,9 @@
+band,telescope,obsmjd,mag,mag_err,alert
+J,P200_sextractor,59031,18.0348,0,True
+H,P200_sextractor,59031,18.02,0,True
+Ks,P200_sextractor,59031,17.32,0,True
+J,P200_sextractor,59121,20.46,0,True
+H,P200_sextractor,59121,18.71,0,True
+Ks,P200_sextractor,59121,17.76,0,True
+H,P200_sextractor,59249,21.1,0,True
+Ks,P200_sextractor,59249,18.3,0,True

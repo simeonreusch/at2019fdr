@@ -1,0 +1,3 @@
+band,telescope,obsmjd,fnu_mJy,fnu_mJy_err,alert
+W1,WISE,58700,0.495,0.0455,True
+W2,WISE,58700,0.546,0.109,True

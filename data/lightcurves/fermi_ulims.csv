@@ -1,0 +1,3 @@
+band,telescope,obsmjd,obsmjd_start,obsmjd_end,flux
+LAT,Fermi,58802.5,58606,58999,1E-12
+LAT,Fermi,59028,58999,59057,1.2E-11
