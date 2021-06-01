@@ -390,7 +390,7 @@ for INTERVAL in INTERVALS:
         ax1.set_ylabel(
             r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=FONTSIZE_LABEL
         )
-        ax1.set_xlabel("Frequency [Hz]", fontsize=FONTSIZE_LABEL)
+        ax1.set_xlabel("Frequency [Hz] (source frame)", fontsize=FONTSIZE_LABEL)
         ax1.set_xlim([5e13, 2e15])
         ax1.set_ylim([9e-14, 1e-11])
         # ax1.set_ylim([9e-16, 1e-11])
@@ -401,9 +401,9 @@ for INTERVAL in INTERVALS:
             nu = utilities.lambda_to_nu(filter_wl[key])
 
             ax1.errorbar(
-                nu,
-                df_red.flux.values * nu,
-                df_red.flux_err.values * nu,
+                nu*(1+REDSHIFT),
+                df_red.flux.values * nu*(1+REDSHIFT),
+                df_red.flux_err.values * nu*(1+REDSHIFT),
                 color=cmap[key],
                 label=filterlabel[key],
                 fmt=".",
@@ -413,11 +413,11 @@ for INTERVAL in INTERVALS:
 
         # OPTICAL / UV
         ax1.plot(
-            utilities.lambda_to_nu(fitted_spectrum_1.wave),
-            fitted_spectrum_1.flux * utilities.lambda_to_nu(fitted_spectrum_1.wave),
+            utilities.lambda_to_nu(fitted_spectrum_1.wave)*(1+REDSHIFT),
+            fitted_spectrum_1.flux * utilities.lambda_to_nu(fitted_spectrum_1.wave)*(1+REDSHIFT),
             color="tab:blue",
             linestyle="dotted",
-            label=f"1 (ext., observer frame)",
+            label=f"1 extincted",
         )
         ax1.plot(
             utilities.lambda_to_nu(unextincted_spectrum_1.wave),
@@ -425,16 +425,16 @@ for INTERVAL in INTERVALS:
             color="tab:blue",
             linestyle="dotted",
             linewidth=0.6,
-            label=f"1 (unext., rest frame)",
+            label=f"1 unextincted",
         )
 
         if FIT == 3:
             ax1.plot(
-                utilities.lambda_to_nu(fitted_spectrum_2.wave),
-                fitted_spectrum_2.flux * utilities.lambda_to_nu(fitted_spectrum_2.wave),
+                utilities.lambda_to_nu(fitted_spectrum_2.wave)*(1+REDSHIFT),
+                fitted_spectrum_2.flux * utilities.lambda_to_nu(fitted_spectrum_2.wave)*(1+REDSHIFT),
                 color="tab:red",
                 linestyle="dotted",
-                label=f"2 (ext., observer frame)",
+                label=f"2 extincted",
             )
             ax1.plot(
                 utilities.lambda_to_nu(unextincted_spectrum_2.wave),
@@ -442,11 +442,11 @@ for INTERVAL in INTERVALS:
                 color="tab:red",
                 linestyle="dotted",
                 linewidth=0.6,
-                label=f"2 (unext., rest frame)",
+                label=f"2 unextincted",
             )
             ax1.plot(
-                utilities.lambda_to_nu(combined_spectrum.wave),
-                combined_spectrum.flux * utilities.lambda_to_nu(combined_spectrum.wave),
+                utilities.lambda_to_nu(combined_spectrum.wave)*(1+REDSHIFT),
+                combined_spectrum.flux * utilities.lambda_to_nu(combined_spectrum.wave)*(1+REDSHIFT),
                 color="black",
                 # linestyle="dotted",
                 label=rf"combined spectrum",
@@ -509,7 +509,7 @@ for INTERVAL in INTERVALS:
         ax2 = ax1.secondary_xaxis(
             "top", functions=(utilities.nu_to_lambda, utilities.lambda_to_nu)
         )
-        ax2.set_xlabel("Frequency [Hz]", fontsize=FONTSIZE_LABEL)
+        ax2.set_xlabel("Frequency [Hz] (source frame)", fontsize=FONTSIZE_LABEL)
 
     ax1.tick_params(axis="both", which="major", labelsize=FONTSIZE_TICKMARKS)
     ax2.tick_params(axis="y", which="major", labelsize=FONTSIZE_TICKMARKS)
@@ -529,9 +529,9 @@ for INTERVAL in INTERVALS:
         os.makedirs(PLOTDIR)
 
     if plotmag:
-        outfile = os.path.join(PLOTDIR, f"double_bb_mag_{INTERVAL}_observer_frame.png")
+        outfile = os.path.join(PLOTDIR, f"double_bb_mag_{INTERVAL}_sourceframe.png")
     else:
-        outfile = os.path.join(PLOTDIR, f"double_bb_nufnu_{INTERVAL}_observer_frame.png")
+        outfile = os.path.join(PLOTDIR, f"double_bb_nufnu_{INTERVAL}_sourceframe.png")
     
     loc = {0: "upper left", 1: "upper right", 2: "upper right"}
 
