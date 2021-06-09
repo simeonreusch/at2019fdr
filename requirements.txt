@@ -4,3 +4,4 @@ jupyter
 pandas
 git+https://github.com/simeonreusch/modelSED@master
 scipy
+numdifftools
