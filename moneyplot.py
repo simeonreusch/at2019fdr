@@ -82,9 +82,43 @@ def create_sed(ax, epoch):
         get_bolometric_flux=True,
     )
 
+    fitted_spectrum_1_lower, bolo_flux_1_lower = utilities.blackbody_spectrum(
+        temperature=params["temp1"]-params["temp1_err"],
+        scale=params["scale1"]+params["scale1_err"],
+        extinction_av=GLOBAL_AV,
+        extinction_rv=GLOBAL_RV,
+        redshift=REDSHIFT,
+        get_bolometric_flux=True,
+    )
+    fitted_spectrum_1_upper, bolo_flux_1_upper = utilities.blackbody_spectrum(
+        temperature=params["temp1"]+params["temp1_err"],
+        scale=params["scale1"]-params["scale1_err"],
+        extinction_av=GLOBAL_AV,
+        extinction_rv=GLOBAL_RV,
+        redshift=REDSHIFT,
+        get_bolometric_flux=True,
+    )
+
+
     fitted_spectrum_2, bolo_flux_2 = utilities.blackbody_spectrum(
         temperature=params["temp2"],
         scale=params["scale2"],
+        extinction_av=GLOBAL_AV,
+        extinction_rv=GLOBAL_RV,
+        redshift=REDSHIFT,
+        get_bolometric_flux=True,
+    )
+    fitted_spectrum_2_lower, bolo_flux_2_lower = utilities.blackbody_spectrum(
+        temperature=params["temp2"]-params["temp2_err"],
+        scale=params["scale2"]+params["scale2_err"],
+        extinction_av=GLOBAL_AV,
+        extinction_rv=GLOBAL_RV,
+        redshift=REDSHIFT,
+        get_bolometric_flux=True,
+    )
+    fitted_spectrum_2_upper, bolo_flux_2_upper = utilities.blackbody_spectrum(
+        temperature=params["temp2"]+params["temp2_err"],
+        scale=params["scale2"]-params["scale2_err"],
         extinction_av=GLOBAL_AV,
         extinction_rv=GLOBAL_RV,
         redshift=REDSHIFT,
@@ -109,7 +143,9 @@ def create_sed(ax, epoch):
         scale_err=None,
     )
     total_luminosity = luminosity_1 + luminosity_2
-    total_luminosity = total_luminosity
+    print(f"{luminosity_1:.2e}")
+    print(f"{luminosity_2:.2e}")
+    print(f"{total_luminosity:.2e}")
 
     combined_spectrum = sncosmo_spectral_v13.Spectrum(
         wave=fitted_spectrum_1.wave, flux=combined_flux, unit=FNU
@@ -129,19 +165,31 @@ def create_sed(ax, epoch):
         color="tab:blue",
         linestyle="dotted",
     )
+
     ax.plot(
         utilities.lambda_to_nu(fitted_spectrum_2.wave),
         fitted_spectrum_2.flux * utilities.lambda_to_nu(fitted_spectrum_2.wave),
         color="tab:red",
         linestyle="dotted",
     )
+
     ax.plot(
         utilities.lambda_to_nu(combined_spectrum.wave),
         combined_spectrum.flux * utilities.lambda_to_nu(combined_spectrum.wave),
         color="black",
     )
 
-    for telescopeband in df_cut.telescopeband.unique():
+
+    ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_1.wave), y2=fitted_spectrum_1_lower.flux * utilities.lambda_to_nu(fitted_spectrum_1_lower.wave), y1=fitted_spectrum_1_upper.flux * utilities.lambda_to_nu(fitted_spectrum_1_upper.wave), alpha=0.3, facecolor="tab:blue")
+
+    ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_2.wave), y2=fitted_spectrum_2_lower.flux * utilities.lambda_to_nu(fitted_spectrum_2_lower.wave), y1=fitted_spectrum_2_upper.flux * utilities.lambda_to_nu(fitted_spectrum_2_upper.wave), alpha=0.3, facecolor="tab:red")
+
+
+
+    telescopebands = ['WISE+W2', 'WISE+W1', 'P200+Ks', 'P200+H', 'P200+J', 'P48+ZTF_i', 'P48+ZTF_r', 'P48+ZTF_g', 'Swift+U', 'Swift+UVW1', 'Swift+UVM2','Swift+UVW2']
+
+    for telescopeband in telescopebands:
+
         df_red = df_cut.query(f"telescopeband == '{telescopeband}'")
         mag = np.mean(df_red.mag.values)
         mag_err = np.mean(df_red.mag_err.values)
@@ -149,20 +197,27 @@ def create_sed(ax, epoch):
         band = telescopeband.split("+")[1]
         flux = utilities.abmag_to_flux(mag)
         flux_err = utilities.abmag_err_to_flux_err(mag, mag_err)
+
+        if telescopeband == "P48+ZTF_i":
+            flux = flux/H_CORRECTION_I_BAND
+
         nu = utilities.lambda_to_nu(filter_wl[telescopeband])
         
+        markers = {"WISE": "p", "P200": "s", "P48": ".", "Swift": "D"}
+        markersizes = {"WISE": 5, "P200": 4, "P48": 8, "Swift": 4}
+
         ax.errorbar(
             nu,
             flux * nu,
             flux_err * nu,
             color=cmap[telescopeband],
             label=filterlabel[telescopeband],
-            fmt=".",
-            markersize=8,
+            fmt=markers[telescope],
+            markersize=markersizes[telescope],
         )
 
     if epoch == 1:
-        ax.legend(ncol=6,bbox_to_anchor=(2.35, 1.58),fancybox=True, shadow=False, fontsize=9, edgecolor="gray")
+        ax.legend(ncol=6,bbox_to_anchor=(2.32, 1.58),fancybox=True, shadow=False, fontsize=9, edgecolor="gray")
         ax.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE-2)
     # ax2 = ax.secondary_xaxis(
     #     "top", functions=(utilities.nu_to_ev, utilities.ev_to_nu)
@@ -182,6 +237,8 @@ if __name__ == "__main__":
     GOLDEN_RATIO = 1/1.618
     GLOBAL_AV = 0.3643711523794127
     GLOBAL_RV = 4.2694173002543225
+
+    H_CORRECTION_I_BAND = 1.0495345056821688
 
 
     CURRENT_FILE_DIR = os.path.dirname(__file__)
@@ -236,7 +293,7 @@ if __name__ == "__main__":
     flux, flux_err = utilities.flux_density_to_flux(
         filter_wl[instrband], flux_density, flux_density_err
     )
-    
+
     lc_ax1.errorbar(
         x=df_ztf_g.obsmjd,
         y=flux,

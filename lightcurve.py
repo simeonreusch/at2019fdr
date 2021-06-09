@@ -15,7 +15,6 @@ from astropy.cosmology import Planck15 as cosmo
 from modelSED import utilities
 import matplotlib
 
-# XRT_COLUMN = "flux0310_pi_-2"
 XRT_COLUMN = "flux0310_bb_25eV"
 nice_fonts = {
     "text.usetex": True,
@@ -55,7 +54,8 @@ def convert_mJy_to_abmag(df):
 
 def plot_lightcurve(df, fluxplot=False):
     """ """
-    plt.figure(dpi=DPI, figsize=(FIG_WIDTH, 5))
+    plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH/GOLDEN_RATIO))
+    # plt.figure(dpi=DPI, figsize=(FIG_WIDTH, 2.5))
     filter_wl = utilities.load_info_json("filter_wl")
     ax1 = plt.subplot(111)
 
@@ -151,7 +151,7 @@ def plot_lightcurve(df, fluxplot=False):
     loc_upper = (0.05, 0.65)
     loc_lower = (0.09, 0.009)
 
-    ax1.legend(fontsize=SMALL_FONTSIZE - 1, ncol=2, framealpha=1, loc=loc_lower)
+    ax1.legend(fontsize=SMALL_FONTSIZE +2, ncol=2, framealpha=1, loc=loc_lower)
 
     for interval in MJD_INTERVALS:
         ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray")
@@ -322,6 +322,7 @@ if __name__ == "__main__":
     FIG_WIDTH = 8
     BIG_FONTSIZE = 14
     SMALL_FONTSIZE = 8
+    GOLDEN_RATIO = 1.618
     DPI = 400
 
     CURRENT_FILE_DIR = os.path.dirname(__file__)
@@ -344,9 +345,26 @@ if __name__ == "__main__":
         "Swift+U",
         "Swift+V",
         "Swift+B",
-        # "WISE+W1",
-        # "WISE+W2",
     ]
+
+    # BANDS_TO_EXCLUDE = [
+    #     "P200_sextractor+J",
+    #     "P200_sextractor+H",
+    #     "P200_sextractor+Ks",
+    #     "Swift+UVW1",
+    #     "Swift+UVW2",
+    #     "Swift+U",
+    #     "Swift+V",
+    #     "Swift+B",
+    #     "WISE+W1",
+    #     "WISE+W2",
+    #     "P48+ZTF_i",
+    #     "P48+ZTF_r",
+    #     "Swift+UVM2",
+    #     "P200+J",
+    #     "P200+Ks",
+    #     "P200+H"
+    # ]
 
     # infile_swift_newcal = os.path.join(LC_DIR, "Swift_newcal.csv")
     # infile_swift_newcal = os.path.join(LC_DIR, "Swift_newcal1.csv")
