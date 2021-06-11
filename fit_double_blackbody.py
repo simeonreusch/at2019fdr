@@ -50,10 +50,12 @@ FITDIR = os.path.join("fit", "double_blackbody")
 GLOBAL_AV = 0.3643711523794127
 GLOBAL_RV = 4.2694173002543225
 
-REFIT = True
+REFIT = False
 FIT = 3
 INTERVALS = [0,1,2]
 EXTINCTIONFIT_INTERVAL = 4
+
+H_CORRECTION_I_BAND = 1.0495345056821688
 
 
 for directory in [PLOTDIR, FITDIR]:
@@ -170,6 +172,11 @@ for INTERVAL in INTERVALS:
         2: os.path.join(FITDIR, f"{INTERVAL}_fitparams_infrared.json"),
         3: os.path.join(FITDIR, f"{INTERVAL}_fitparams_all.json"),
     }
+    FITFILENAMES_FULL = {
+        1: os.path.join(FITDIR, f"{INTERVAL}_fitparams_optical_uv_full.json"),
+        2: os.path.join(FITDIR, f"{INTERVAL}_fitparams_infrared_full.json"),
+        3: os.path.join(FITDIR, f"{INTERVAL}_fitparams_all_full.json"),
+    }
 
     magnitudes = {}
 
@@ -194,23 +201,35 @@ for INTERVAL in INTERVALS:
     band = []
     mag = []
     mag_err = []
+    flux = []
+    flux_err = []
     for index, entry in enumerate(magnitudes):
-        mag.append(magnitudes[entry][0])
-        mag_err.append(magnitudes[entry][1])
+        m = magnitudes[entry][0]
+        m_err = magnitudes[entry][1]
+        mag.append(m)
+        mag_err.append(m_err)
         instrument.append(entry.split("+")[0])
         band.append(entry.split("+")[1])
+
+        f = utilities.abmag_to_flux(m)
+        f_err = utilities.abmag_err_to_flux_err(m, m_err)
+
+        if entry.split("+")[1] == "ZTF_i":
+            f = f/H_CORRECTION_I_BAND
+
+        flux.append(f)
+        flux_err.append(f_err)
 
     df["instrument"] = instrument
     df["band"] = band
     df["mag"] = mag
     df["mag_err"] = mag_err
-    df["flux"] = utilities.abmag_to_flux(df.mag)
-    df["flux_err"] = utilities.abmag_err_to_flux_err(df.mag, df.mag_err)
+    df["flux"] = flux
+    df["flux_err"] = flux_err
 
     filter_wl = load_info_json("filter_wl")
     cmap = load_info_json("cmap")
     filterlabel = load_info_json("filterlabel")
-
     # Now fit the sum of two spectra
     mags = []
     mag_errs = []
@@ -301,6 +320,9 @@ for INTERVAL in INTERVALS:
         with open(FITFILENAMES[FIT], "w") as outfile:
             json.dump(fitresult, outfile)
 
+        with open(FITFILENAMES_FULL[FIT], "w") as outfile:
+            out.params.dump(outfile)
+
     else:
         with open(FITFILENAMES[FIT]) as infile:
             fitresult = json.load(infile)
@@ -357,30 +379,32 @@ for INTERVAL in INTERVALS:
         )
 
     # # # Calculate luminosity
-    luminosity_1, _, radius1, _ = utilities.calculate_bolometric_luminosity(
+    luminosity_1, luminosity_1_err, radius1, radius1_err = utilities.calculate_bolometric_luminosity(
         temperature=fitresult["temp1"],
         scale=fitresult["scale1"],
         redshift=REDSHIFT,
-        temperature_err=None,
-        scale_err=None,
+        temperature_err=fitresult["temp1_err"],
+        scale_err=fitresult["scale1_err"],
     )
-    luminosity_2, _, radius2, _ = utilities.calculate_bolometric_luminosity(
+
+    luminosity_2, luminosity_2_err, radius2, radius2_err = utilities.calculate_bolometric_luminosity(
         temperature=fitresult["temp2"],
         scale=fitresult["scale2"],
         redshift=REDSHIFT,
-        temperature_err=None,
-        scale_err=None,
+        temperature_err=fitresult["temp2_err"],
+        scale_err=fitresult["scale2_err"],
     )
+
     total_luminosity = luminosity_1 + luminosity_2
 
     print("--------------------------------")
-    print(f"temp optical/UV: {fitresult['temp1']:.0f} K")
-    print(f"temp infrared: {fitresult['temp2']:.0f} K")
-    print(f"luminosity optical/UV = {luminosity_1:.2e}")
-    print(f"luminosity infrared = {luminosity_2:.2e}")
-    print(f"total luminosity = {total_luminosity:.2e}")
-    print(f"radius optical/UV = {radius1:.2e}")
-    print(f"radius infrared = {radius2:.2e}")
+    print(f"temp optical/UV: {fitresult['temp1']:.0f} +/- {fitresult['temp1_err']:.0f} K")
+    print(f"temp infrared: {fitresult['temp2']:.0f} +/- {fitresult['temp2_err']:.0f} K")
+    print(f"luminosity optical/UV = {luminosity_1.value:.1e} +/- {luminosity_1_err:.2e}")
+    print(f"luminosity infrared = {luminosity_2.value:.1e} +/- {luminosity_2_err:.1e}")
+    print(f"total luminosity = {total_luminosity.value:.1e} +/- {luminosity_1_err+luminosity_2_err:.1e}")
+    print(f"radius optical/UV = {radius1.value:.1e} +/- {radius1_err:.1e}")
+    print(f"radius infrared = {radius2.value:.1e} +/- {radius2_err:.1e}")
     print("--------------------------------")
 
     # Now we plot
