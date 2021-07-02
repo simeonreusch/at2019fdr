@@ -56,8 +56,8 @@ colors = {
     "P200_ref": "black",
 }
 
-DATES = ["2020_07_01", "2020_09_29", "2021_02_04"]
-DATE_TO_ABBR_MJD = {"2020_07_01": 59031, "2020_09_29": 59121, "2021_02_04": 59249}
+DATES = ["2020_07_01", "2020_09_29", "2021_02_04", "2021_05_28"]
+DATE_TO_ABBR_MJD = {"2020_07_01": 59031, "2020_09_29": 59121, "2021_02_04": 59249, "2021_05_28": 59362}
 DATES_ISO = [date.replace("_", "-") + "T00:00:00" for date in DATES]
 DATES_MJD = [Time(date_iso, format="isot", scale="utc").mjd for date_iso in DATES_ISO]
 
@@ -70,10 +70,10 @@ for i, DATE in enumerate(DATES):
 
     P200_SEXTRACTOR_FILE = os.path.join("data", "P200_unsubtracted.csv")
     P200_GALFIT_FILE_REF_EPOCH1 = os.path.join(
-        "/", "home", "simeon", "galfit", "galfit_result_twocomp_fromepoch1.csv"
+        "/", "Users", "simeon", "galfit", "galfit_result_twocomp_fromepoch1.csv"
     )
-    P200_GALFIT_FILE_REF_EPOCH3 = os.path.join(
-        "/", "home", "simeon", "galfit", "galfit_result_twocomp_fromepoch3.csv"
+    P200_GALFIT_FILE_REF_EPOCH4 = os.path.join(
+        "/", "Users", "simeon", "galfit", "galfit_result_twocomp_fromepoch4.csv"
     )
     # infile = os.path.join(HOST_MODEL_DIR, "Tywin_parasfh_spectrum_with_WISE.dat")
     infile = os.path.join(HOST_MODEL_DIR, "Tywin_parasfh_wduste_spectrum_NEW.dat")
@@ -138,14 +138,14 @@ for i, DATE in enumerate(DATES):
     df_ps1["abmag_err"] = ps1_abmag_err
 
     # Now we get the P200 data
-    df_p200_sextractor = pd.read_csv(P200_SEXTRACTOR_FILE, index_col="obsmjd")
+    # df_p200_sextractor = pd.read_csv(P200_SEXTRACTOR_FILE, index_col="obsmjd")
 
     # And the P200 galfit datafram
     df_p200_galfit_ref_epoch1 = pd.read_csv(
         P200_GALFIT_FILE_REF_EPOCH1, index_col="obsmjd"
     )
-    df_p200_galfit_ref_epoch3 = pd.read_csv(
-        P200_GALFIT_FILE_REF_EPOCH3, index_col="obsmjd"
+    df_p200_galfit_ref_epoch4 = pd.read_csv(
+        P200_GALFIT_FILE_REF_EPOCH4, index_col="obsmjd"
     )
 
     # Now we get the SDSS data
@@ -196,56 +196,56 @@ for i, DATE in enumerate(DATES):
     for band in p200_bands:
         date_mjd_abbr = DATE_TO_ABBR_MJD[DATE]
 
-        abmag_sextractor_both = df_p200_sextractor.query(f"obsmjd == {date_mjd_abbr}")[
-            f"{band}_mag_iso_AB"
-        ].values[0]
+        # abmag_sextractor_both = df_p200_sextractor.query(f"obsmjd == {date_mjd_abbr}")[
+            # f"{band}_mag_iso_AB"
+        # ].values[0]
 
         vegamag_host_1 = df_p200_galfit_ref_epoch1.loc[DATES_MJD[i]][
             f"{band}_vegamag_host"
         ]
-        vegamag_host_3 = df_p200_galfit_ref_epoch3.loc[DATES_MJD[i]][
+        vegamag_host_4 = df_p200_galfit_ref_epoch4.loc[DATES_MJD[i]][
             f"{band}_vegamag_host"
         ]
         vegamag_psf_1 = df_p200_galfit_ref_epoch1.loc[DATES_MJD[i]][
             f"{band}_vegamag_psf"
         ]
-        vegamag_psf_3 = df_p200_galfit_ref_epoch3.loc[DATES_MJD[i]][
+        vegamag_psf_4 = df_p200_galfit_ref_epoch4.loc[DATES_MJD[i]][
             f"{band}_vegamag_psf"
         ]
 
         abmag_host_1 = twomass_vega_to_ab("P200+" + band, vegamag_host_1)
-        abmag_host_3 = twomass_vega_to_ab("P200+" + band, vegamag_host_3)
+        abmag_host_4 = twomass_vega_to_ab("P200+" + band, vegamag_host_4)
         abmag_psf_1 = twomass_vega_to_ab("P200+" + band, vegamag_psf_1)
-        abmag_psf_3 = twomass_vega_to_ab("P200+" + band, vegamag_psf_3)
+        abmag_psf_4 = twomass_vega_to_ab("P200+" + band, vegamag_psf_4)
 
         flux_jy_host_1 = utilities.abmag_to_flux(abmag_host_1, 0)
-        flux_jy_host_3 = utilities.abmag_to_flux(abmag_host_3, 0)
+        flux_jy_host_4 = utilities.abmag_to_flux(abmag_host_4, 0)
         flux_jy_psf_1 = utilities.abmag_to_flux(abmag_psf_1, 0)
-        flux_jy_psf_3 = utilities.abmag_to_flux(abmag_psf_3, 0)
+        flux_jy_psf_4 = utilities.abmag_to_flux(abmag_psf_4, 0)
 
         flux_jy_host_and_psf_1 = flux_jy_host_1 + flux_jy_psf_1
-        flux_jy_host_and_psf_3 = flux_jy_host_3 + flux_jy_psf_3
-        flux_jy_host_and_psf_sextractor = utilities.abmag_to_flux(
-            abmag_sextractor_both, 0
-        )
+        flux_jy_host_and_psf_4 = flux_jy_host_4 + flux_jy_psf_4
+        # flux_jy_host_and_psf_sextractor = utilities.abmag_to_flux(
+        #     abmag_sextractor_both, 0
+        # )
         flux_jy_host_and_psf_average = (
-            flux_jy_host_and_psf_1 + flux_jy_host_and_psf_3
+            flux_jy_host_and_psf_1 + flux_jy_host_and_psf_4
         ) / 2
 
         if VERBOSE:
             print(f"flux_jy_host_and_psf_1: {flux_jy_host_and_psf_1}")
-            print(f"flux_jy_host_and_psf_3: {flux_jy_host_and_psf_3}")
+            print(f"flux_jy_host_and_psf_4: {flux_jy_host_and_psf_4}")
 
         abmag_host_and_psf_1 = utilities.flux_to_abmag(flux_jy_host_and_psf_1, 0)
-        abmag_host_and_psf_3 = utilities.flux_to_abmag(flux_jy_host_and_psf_3, 0)
+        abmag_host_and_psf_4 = utilities.flux_to_abmag(flux_jy_host_and_psf_4, 0)
         abmag_host_and_psf_average = utilities.flux_to_abmag(
             flux_jy_host_and_psf_average, 0
         )
         if VERBOSE:
             print(f"abmag_host_and_psf_1: {abmag_host_and_psf_1}")
-            print(f"abmag_host_and_psf_3: {abmag_host_and_psf_3}")
+            print(f"abmag_host_and_psf_4: {abmag_host_and_psf_4}")
 
-        abmag_host_and_psf_err = abs(abmag_host_and_psf_1 - abmag_host_and_psf_3)
+        abmag_host_and_psf_err = abs(abmag_host_and_psf_1 - abmag_host_and_psf_4)
 
         if VERBOSE:
             print(f"{band}: abmag_host_and_psf_average: {abmag_host_and_psf_average}")
@@ -262,9 +262,9 @@ for i, DATE in enumerate(DATES):
         )
         flux_jy_host_synthetic = utilities.abmag_to_flux(abmag_host_synthetic, magzp=0)
         flux_jy_transient = flux_jy_host_and_psf_average - flux_jy_host_synthetic
-        flux_jy_transient_sextractor = (
-            flux_jy_host_and_psf_sextractor - flux_jy_host_synthetic
-        )
+        # flux_jy_transient_sextractor = (
+        #     flux_jy_host_and_psf_sextractor - flux_jy_host_synthetic
+        # )
         if VERBOSE:
             print(f"flux_jy_host_synthetic: {flux_jy_host_synthetic}")
             print(f"flux_jy_transient: {flux_jy_transient}")
@@ -280,9 +280,9 @@ for i, DATE in enumerate(DATES):
         abmag_err_transient = utilities.flux_err_to_abmag_err(
             flux_jy_transient, flux_host_and_psf_err
         )
-        abmag_transient_sextractor = utilities.flux_to_abmag(
-            flux_jy_transient_sextractor, 0
-        )
+        # abmag_transient_sextractor = utilities.flux_to_abmag(
+        #     flux_jy_transient_sextractor, 0
+        # )
 
         if VERBOSE:
             print(f"abmag_transient: {abmag_transient}")
@@ -291,7 +291,7 @@ for i, DATE in enumerate(DATES):
         print(
             f"mjd: {DATES_MJD[i]} / band: {band} / abmag_avg: {abmag_transient:.2f} +/- {abmag_err_transient:.2f}"
         )
-        print(f"abmag_sextractor: {abmag_transient_sextractor:.2f}")
+        # print(f"abmag_sextractor: {abmag_transient_sextractor:.2f}")
 
         ax1.errorbar(
             utilities.lambda_to_nu(filter_wl["P200+" + band]),
@@ -308,18 +308,18 @@ for i, DATE in enumerate(DATES):
             color="black",
         )
 
-        ax1.scatter(
-            utilities.lambda_to_nu(filter_wl["P200+" + band]),
-            abmag_sextractor_both,
-            marker="*",
-            color=colors["P200"],
-        )
-        ax1.scatter(
-            utilities.lambda_to_nu(filter_wl["P200+" + band]),
-            abmag_transient_sextractor,
-            marker="*",
-            color="black",
-        )
+        # ax1.scatter(
+        #     utilities.lambda_to_nu(filter_wl["P200+" + band]),
+        #     abmag_sextractor_both,
+        #     marker="*",
+        #     color=colors["P200"],
+        # )
+        # ax1.scatter(
+        #     utilities.lambda_to_nu(filter_wl["P200+" + band]),
+        #     abmag_transient_sextractor,
+        #     marker="*",
+        #     color="black",
+        # )
 
     # for band in p200_bands:
     #     abmag_host2 = df_p200_galfit.loc[DATES_MJD[i]][f"{band}_abmag_host2"]
