@@ -289,7 +289,7 @@ for i, DATE in enumerate(DATES):
             print(f"abmag_err_transient: {abmag_err_transient}")
 
         print(
-            f"mjd: {DATES_MJD[i]} / band: {band} / abmag_avg: {abmag_transient:.2f} +/- {abmag_err_transient:.2f}"
+            f"mjd: {DATES_MJD[i]} / band: {band} / abmag_avg: {abmag_transient:.4f} +/- {abmag_err_transient:.4f}"
         )
         # print(f"abmag_sextractor: {abmag_transient_sextractor:.2f}")
 
