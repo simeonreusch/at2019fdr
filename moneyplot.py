@@ -17,6 +17,8 @@ from modelSED.utilities import FNU
 from matplotlib.patches import ConnectionPatch, Polygon
 import matplotlib
 
+OLD_P200 = False
+
 pd.options.mode.chained_assignment = None
 
 cmap = utilities.load_info_json("cmap")
@@ -180,9 +182,9 @@ def create_sed(ax, epoch):
     )
 
 
-    ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_1.wave), y2=fitted_spectrum_1_lower.flux * utilities.lambda_to_nu(fitted_spectrum_1_lower.wave), y1=fitted_spectrum_1_upper.flux * utilities.lambda_to_nu(fitted_spectrum_1_upper.wave), alpha=0.3, facecolor="tab:blue")
+    # ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_1.wave), y2=fitted_spectrum_1_lower.flux * utilities.lambda_to_nu(fitted_spectrum_1_lower.wave), y1=fitted_spectrum_1_upper.flux * utilities.lambda_to_nu(fitted_spectrum_1_upper.wave), alpha=0.3, facecolor="tab:blue")
 
-    ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_2.wave), y2=fitted_spectrum_2_lower.flux * utilities.lambda_to_nu(fitted_spectrum_2_lower.wave), y1=fitted_spectrum_2_upper.flux * utilities.lambda_to_nu(fitted_spectrum_2_upper.wave), alpha=0.3, facecolor="tab:red")
+    # ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_2.wave), y2=fitted_spectrum_2_lower.flux * utilities.lambda_to_nu(fitted_spectrum_2_lower.wave), y1=fitted_spectrum_2_upper.flux * utilities.lambda_to_nu(fitted_spectrum_2_upper.wave), alpha=0.3, facecolor="tab:red")
 
 
 
@@ -249,8 +251,10 @@ if __name__ == "__main__":
     FITDIR = os.path.join("fit", "double_blackbody")
 
 
-
-    infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve.csv")
+    if OLD_P200:
+        infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve_oldp200.csv")
+    else:
+        infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve_final.csv")
 
     df = pd.read_csv(infile_lightcurve)
     df_ztf_g = df.query("telescope == 'P48' and band == 'ZTF_g'")
@@ -389,8 +393,10 @@ if __name__ == "__main__":
         for polygon in [polygon1, polygon2]:
             fig.add_artist(polygon)
 
-    outfile = os.path.join(PLOT_DIR, "lightcurve_and_sed.png")
-    fig.savefig(outfile)
+    outfile_png = os.path.join(PLOT_DIR, "lightcurve_and_sed.png")
+    outfile_pdf = os.path.join(PLOT_DIR, "lightcurve_and_sed.pdf")
+    fig.savefig(outfile_png)
+    fig.savefig(outfile_pdf)
 
 
 

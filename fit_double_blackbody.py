@@ -23,9 +23,14 @@ nice_fonts = {
 }
 matplotlib.rcParams.update(nice_fonts)
 
-LIGHTCURVE_INFILE = os.path.join("data", "lightcurves", "full_lightcurve.csv")
+OLD_P200 = False
 
-# MJD_INTERVALS = [[58700, 58720], [59006, 59032], [59110, 59130], [59220,59265]]
+if OLD_P200:
+    LIGHTCURVE_INFILE = os.path.join("data", "lightcurves", "full_lightcurve_oldp200.csv")
+else:
+    LIGHTCURVE_INFILE = os.path.join("data", "lightcurves", "full_lightcurve_final.csv")
+
+
 MJD_INTERVALS = [[58700, 58720], [59006, 59130], [59220, 59271]]
 
 # FITPARAMS_FILE = os.path.join("data", "fitparams_late_epoch.json")
@@ -46,13 +51,18 @@ FITDIR = os.path.join("fit", "double_blackbody")
 # GLOBAL_AV = 1.48477495
 # GLOBAL_RV = 3.93929588
 
-## EXTINCTION FROM EPOCH 0
-GLOBAL_AV = 0.3643711523794127
-GLOBAL_RV = 4.2694173002543225
+FITMETHOD = "basinhopping"
 
-REFIT = False
+## EXTINCTION FROM EPOCH 0
+# GLOBAL_AV = 0.3643711523794127
+# GLOBAL_RV = 4.2694173002543225
+GLOBAL_AV = 0.2662317621632567
+GLOBAL_RV = 3.127271539497185
+
+REFIT = True
 FIT = 3
 INTERVALS = [0,1,2]
+# INTERVALS = [0]
 EXTINCTIONFIT_INTERVAL = 4
 
 H_CORRECTION_I_BAND = 1.0495345056821688
@@ -265,6 +275,7 @@ for INTERVAL in INTERVALS:
 
     minimizer_fcn = double_blackbody_minimizer
 
+
     if REFIT:
         minimizer = Minimizer(
             userfcn=minimizer_fcn,
@@ -274,7 +285,7 @@ for INTERVAL in INTERVALS:
             calc_covar=True,
         )
 
-        out = minimizer.minimize(method="nelder")
+        out = minimizer.minimize(method=FITMETHOD)
 
         print(report_fit(out.params))
 
@@ -396,13 +407,14 @@ for INTERVAL in INTERVALS:
     )
 
     total_luminosity = luminosity_1 + luminosity_2
+    luminosity_err = np.sqrt(luminosity_1_err**2+luminosity_2_err**2)
 
     print("--------------------------------")
     print(f"temp optical/UV: {fitresult['temp1']:.0f} +/- {fitresult['temp1_err']:.0f} K")
     print(f"temp infrared: {fitresult['temp2']:.0f} +/- {fitresult['temp2_err']:.0f} K")
     print(f"luminosity optical/UV = {luminosity_1.value:.1e} +/- {luminosity_1_err:.2e}")
     print(f"luminosity infrared = {luminosity_2.value:.1e} +/- {luminosity_2_err:.1e}")
-    print(f"total luminosity = {total_luminosity.value:.1e} +/- {luminosity_1_err+luminosity_2_err:.1e}")
+    print(f"total luminosity = {total_luminosity.value:.1e} +/- {luminosity_err:.1e}")
     print(f"radius optical/UV = {radius1.value:.1e} +/- {radius1_err:.1e}")
     print(f"radius infrared = {radius2.value:.1e} +/- {radius2_err:.1e}")
     print("--------------------------------")

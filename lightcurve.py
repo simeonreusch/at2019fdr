@@ -159,10 +159,16 @@ def plot_lightcurve(df, fluxplot=False):
     sns.despine(top=False, right=False)
     plt.tight_layout()
     if not fluxplot:
-        outpath = "lightcurve_mag.png"
+        outfile_png = "lightcurve_mag.png"
+        outfile_pdf = "lightcurve_mag.pdf"
     else:
-        outpath = "lightcurve_flux.png"
-    plt.savefig(os.path.join(PLOT_DIR, outpath))
+        outfile_png = "lightcurve_flux.png"
+        outfile_pdf = "lightcurve_flux.pdf"
+
+    outfile_png = os.path.join(PLOT_DIR, outfile_png)
+    outfile_pdf = os.path.join(PLOT_DIR, outfile_pdf)
+    plt.savefig(outfile_png)
+    plt.savefig(outfile_pdf)
 
     percent_forced = (
         100
@@ -340,9 +346,9 @@ if __name__ == "__main__":
         "P200_sextractor+J",
         "P200_sextractor+H",
         "P200_sextractor+Ks",
-        "Swift+UVW1",
-        "Swift+UVW2",
-        "Swift+U",
+        # "Swift+UVW1",
+        # "Swift+UVW2",
+        # "Swift+U",
         "Swift+V",
         "Swift+B",
     ]
