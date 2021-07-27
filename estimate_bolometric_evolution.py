@@ -158,7 +158,7 @@ df_params.to_csv("fit_lumi_radii.csv")
 
 obsmjd_lumi = np.insert(obsmjd_lumi, [0,3], [MJD_START, MJD_END])
 total_luminosities = np.insert(total_luminosities, [0,3], [0, 0])
-
+infrared_luminositites = np.insert(infrared_luminosities, [0,3], [0,0])
 
 lc_infile = os.path.join(DATADIR, "full_lightcurve_final.csv")
 lc = pd.read_csv(lc_infile)
@@ -175,19 +175,20 @@ ax1 = plt.subplot(111)
 
 ax2 = ax1.twinx()
 # ax2.set_ylim([21.5, 18.])
-ax1.plot(obsmjd_lumi, total_luminosities)
+ax1.plot(obsmjd_lumi, infrared_luminositites)
 ax1.set_ylabel("Luminosity [erg/s]")
 ax2.set_ylabel(r"Spectral flux density [erg/s/cm$^2$/Hz]")
 ax1.set_xlabel("Date [MJD]")
 # ax2.scatter(lc_g["obsmjd"], lc_g["mag"]*(-1)+22, c="g", s=2)
 ax2.scatter(lc_g["obsmjd"], lc_g["flux"], c="g", s=2)
 # # ax2.plot(lc_g["obsmjd"], interpolation3[1], c="black")
-outfile = os.path.join(PLOTDIR, "integrated_luminosity.pdf")
+outfile = os.path.join(PLOTDIR, "integrated_infrared_luminosity.pdf")
 plt.savefig(outfile)
 
 
 
 integrated_bolo_lumi = np.trapz(total_luminosities, x=obsmjd_lumi) * u.erg / u.s * u.day
+integrated_infrared_bolo_lumi = np.trapz(total_luminosities, x=obsmjd_lumi) * u.erg / u.s * u.day
 integrated_bolo_lumi = integrated_bolo_lumi.to(u.erg)
 
 days = 59245.5-58710.0 

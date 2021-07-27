@@ -29,3 +29,30 @@ fitted_max_ir_radius = fitted_max_ir_radius * u.cm
 print(f"time delay between optical and IR peak: {opt_ir_delay_day:.0f}")
 print(f"dust distance inferred from light travel time: {light_travel_distance:.2e}")
 print(f"dust distance inferred from BB fit: {fitted_max_ir_radius:.2e}")
+
+def equation_12(T=1850, R=0.1):
+	""" 
+	T in Kelvin
+	Radius in parsec
+	"""
+	L_abs = 5 * 10**44 * (R/0.1)**2 * (T/1850)**5.8 * u.erg / u.s
+
+	return L_abs
+
+R_Tywin = 0.3
+R_test = 0.15
+T_Tywin = 1750
+T_test = 1750
+
+L_abs = equation_12(T=T_Tywin, R=R_Tywin)
+L_abs = equation_12(T=T_test, R=R_test)
+
+log10L_abs = np.log10(L_abs.value)
+print(f"L_abs = {L_abs:.3e}")
+print(f"log L_abs = {log10L_abs:.3f}")
+
+
+
+
+
+
