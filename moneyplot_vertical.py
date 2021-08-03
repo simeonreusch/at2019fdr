@@ -160,8 +160,8 @@ def create_sed(ax, epoch):
     )
 
     ax.text(
-        0.6e14,
-        1.75e-12,
+        2.9e14,
+        1.85e-12,
         f"L = {total_luminosity:.1e}",
         bbox=bbox,
         fontsize=SMALL_FONTSIZE,
@@ -225,7 +225,7 @@ def create_sed(ax, epoch):
         )
 
     if epoch == 1:
-        ax.legend(ncol=6,bbox_to_anchor=(1.2, 2.82),fancybox=True, shadow=False, fontsize=9, edgecolor="gray")
+        ax.legend(ncol=6,bbox_to_anchor=(1.2, 2.82),fancybox=True, shadow=False, fontsize=9, edgecolor="black")
     if epoch == 3:
         ax.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE-2)
     # ax2 = ax.secondary_xaxis(
@@ -241,6 +241,8 @@ def create_sed(ax, epoch):
 
 
     ax.grid(which="both", alpha=0.15)
+
+    return ax
     
 
 if __name__ == "__main__":
@@ -295,8 +297,10 @@ if __name__ == "__main__":
     sed2 = fig.add_subplot(3,5,(9,10))
     sed3 = fig.add_subplot(3,5,(14,15))
 
-    sed_xlims = [5e13, 2e15]
-    sed_ylims = [5e-14, 2e-12]
+
+
+    sed_xlims = [4.5e13, 2e15]
+    sed_ylims = [1e-14, 2e-12]
 
     def set_scales(ax):
         ax.set_xscale("log")
@@ -366,7 +370,7 @@ if __name__ == "__main__":
         color="tab:red",
         zorder=50,
     )
-    bbox = dict(boxstyle="round", fc="w", ec="gray")
+    bbox = dict(boxstyle="round", fc="w", ec="black")
     lc_ax1.text(
         t_neutrino.mjd-180,
         1.3e-13,
@@ -377,17 +381,60 @@ if __name__ == "__main__":
         color="tab:red",
     )
 
+
+    loc = [t_neutrino.mjd-302, t_neutrino.mjd+55, t_neutrino.mjd+234]
+
+    bbox = dict(boxstyle="circle", fc="#e5e5e5", ec="black")
+    for i in range(1,4):
+        lc_ax1.text(
+            loc[i-1],
+            1.8e-12,
+            i,
+            # rotation="vertical",
+            bbox=bbox,
+            fontsize=BIG_FONTSIZE-1,
+            color="black",
+        )
+
     loc_upper = (0.05, 0.65)
     loc_lower = (0.15, 0.009)
 
-
     for interval in MJD_INTERVALS:
-        lc_ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray")
+        lc_ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray", edgecolor="black")
+
+    bbox = dict(boxstyle="round", fc="w", ec="black")
+    ax1 = create_sed(sed1, 0)
+    ax2 = create_sed(sed2, 1)
+    ax3 = create_sed(sed3, 2)
+
+    bbox = dict(boxstyle="circle", fc="#e5e5e5", ec="black")
+    for i, ax in enumerate([ax1, ax2, ax3]):
+        ax.text(
+            4.2e13,
+            2.7e-13,
+            i+1,
+            # rotation="vertical",
+            bbox=bbox,
+            fontsize=BIG_FONTSIZE-1,
+            color="black",
+        )
 
 
-    create_sed(sed1, 0)
-    create_sed(sed2, 1)
-    create_sed(sed3, 2)
+
+    params = {"MIR": [6e13, 7.0e-13, "red"], "NIR": [1.8e14,7.0e-13,"orange"], "Opt": [4.8e14, 7.0e-13, "green"], "UV": [1.15e15, 7.0e-13, "violet"]}
+
+    bbox = dict(boxstyle="round", fc="w", ec="black")
+    for wl_range in ["MIR", "NIR", "Opt", "UV"]:
+        bbox = dict(boxstyle="round", fc="white", ec="white")
+        ax3.text(  
+            params[wl_range][0],
+            params[wl_range][1],
+            wl_range,
+            bbox=bbox,
+            color=params[wl_range][2],
+            alpha=1,
+            fontsize=SMALL_FONTSIZE,
+        )    
     
     for i, sed in enumerate([sed1, sed2, sed3]):
 

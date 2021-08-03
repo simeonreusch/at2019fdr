@@ -265,7 +265,7 @@ ax2.set_xlabel(r"Energy [eV]", fontsize=8)
 # ax1.set_xlabel(r"log10 Energy [eV]", fontsize=8))
 plt.grid(which="both", alpha=0.15)
 plt.legend()
-plt.savefig("test.png")
+plt.savefig("lumitest.png")
 
 
 

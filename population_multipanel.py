@@ -321,9 +321,9 @@ def create_subplot(ax, max_distnr):
     df_baratheons = df_tdes_baratheons.query(f"type == 'Baratheon' and distnr < {max_distnr}")
 
     if max_distnr > 0.19:
-        label_baratheons = f"NLSy1\nflares ({len(df_baratheons)+1})"
+        label_baratheons = f"TDE-\nlike ({len(df_baratheons)+1})"
     else:
-        label_baratheons = f"NLSy1\nflares ({len(df_baratheons)})"
+        label_baratheons = f"TDE-\nlike ({len(df_baratheons)})"
     plotparams = {
         "Baratheons": {
             "df": df_baratheons,
@@ -356,7 +356,7 @@ def create_subplot(ax, max_distnr):
             "df": df_ia,
             "c": "tab:green",
             "m": "p",
-            "l": f"SNe Ia ({len(df_ia)})",
+            "l": f"SNe Ia\n({len(df_ia)})",
             "s": 14,
             "a": 0.1,
             "zorder": 4,
@@ -447,7 +447,7 @@ def create_subplot(ax, max_distnr):
 
 
 
-    legend = ax.legend(fontsize=ANNOTATION_FONTSIZE-4, loc=1)
+    legend = ax.legend(fontsize=ANNOTATION_FONTSIZE-5, loc=1)
     for lh in legend.legendHandles:
         lh.set_alpha(1)
 
@@ -468,7 +468,7 @@ if __name__ == "__main__":
     sed2 = fig.add_subplot(1,3,2)
     sed3 = fig.add_subplot(1,3,3)
 
-    distances = [10000, 0.4, 0.1]
+    distances = [10000, 0.4, 0.2]
 
     ax1 = create_subplot(sed1, distances[0])
     ax2 = create_subplot(sed2, distances[1])
