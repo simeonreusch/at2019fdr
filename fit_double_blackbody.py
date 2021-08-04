@@ -26,7 +26,9 @@ matplotlib.rcParams.update(nice_fonts)
 OLD_P200 = False
 
 if OLD_P200:
-    LIGHTCURVE_INFILE = os.path.join("data", "lightcurves", "full_lightcurve_oldp200.csv")
+    LIGHTCURVE_INFILE = os.path.join(
+        "data", "lightcurves", "full_lightcurve_oldp200.csv"
+    )
 else:
     LIGHTCURVE_INFILE = os.path.join("data", "lightcurves", "full_lightcurve_final.csv")
 
@@ -61,7 +63,7 @@ GLOBAL_RV = 3.127271539497185
 
 REFIT = True
 FIT = 3
-INTERVALS = [0,1,2]
+INTERVALS = [0, 1, 2]
 # INTERVALS = [0]
 EXTINCTIONFIT_INTERVAL = 4
 
@@ -225,7 +227,7 @@ for INTERVAL in INTERVALS:
         f_err = utilities.abmag_err_to_flux_err(m, m_err)
 
         if entry.split("+")[1] == "ZTF_i":
-            f = f/H_CORRECTION_I_BAND
+            f = f / H_CORRECTION_I_BAND
 
         flux.append(f)
         flux_err.append(f_err)
@@ -274,7 +276,6 @@ for INTERVAL in INTERVALS:
     data_err = mag_errs
 
     minimizer_fcn = double_blackbody_minimizer
-
 
     if REFIT:
         minimizer = Minimizer(
@@ -347,7 +348,6 @@ for INTERVAL in INTERVALS:
         extinction_av = GLOBAL_AV
         extinction_rv = GLOBAL_RV
 
-
     fitted_spectrum_1, bolo_flux_1 = utilities.blackbody_spectrum(
         temperature=fitresult["temp1"],
         scale=fitresult["scale1"],
@@ -390,7 +390,12 @@ for INTERVAL in INTERVALS:
         )
 
     # # # Calculate luminosity
-    luminosity_1, luminosity_1_err, radius1, radius1_err = utilities.calculate_bolometric_luminosity(
+    (
+        luminosity_1,
+        luminosity_1_err,
+        radius1,
+        radius1_err,
+    ) = utilities.calculate_bolometric_luminosity(
         temperature=fitresult["temp1"],
         scale=fitresult["scale1"],
         redshift=REDSHIFT,
@@ -398,7 +403,12 @@ for INTERVAL in INTERVALS:
         scale_err=fitresult["scale1_err"],
     )
 
-    luminosity_2, luminosity_2_err, radius2, radius2_err = utilities.calculate_bolometric_luminosity(
+    (
+        luminosity_2,
+        luminosity_2_err,
+        radius2,
+        radius2_err,
+    ) = utilities.calculate_bolometric_luminosity(
         temperature=fitresult["temp2"],
         scale=fitresult["scale2"],
         redshift=REDSHIFT,
@@ -407,12 +417,16 @@ for INTERVAL in INTERVALS:
     )
 
     total_luminosity = luminosity_1 + luminosity_2
-    luminosity_err = np.sqrt(luminosity_1_err**2+luminosity_2_err**2)
+    luminosity_err = np.sqrt(luminosity_1_err ** 2 + luminosity_2_err ** 2)
 
     print("--------------------------------")
-    print(f"temp optical/UV: {fitresult['temp1']:.0f} +/- {fitresult['temp1_err']:.0f} K")
+    print(
+        f"temp optical/UV: {fitresult['temp1']:.0f} +/- {fitresult['temp1_err']:.0f} K"
+    )
     print(f"temp infrared: {fitresult['temp2']:.0f} +/- {fitresult['temp2_err']:.0f} K")
-    print(f"luminosity optical/UV = {luminosity_1.value:.1e} +/- {luminosity_1_err:.2e}")
+    print(
+        f"luminosity optical/UV = {luminosity_1.value:.1e} +/- {luminosity_1_err:.2e}"
+    )
     print(f"luminosity infrared = {luminosity_2.value:.1e} +/- {luminosity_2_err:.1e}")
     print(f"total luminosity = {total_luminosity.value:.1e} +/- {luminosity_err:.1e}")
     print(f"radius optical/UV = {radius1.value:.1e} +/- {radius1_err:.1e}")
@@ -463,7 +477,8 @@ for INTERVAL in INTERVALS:
         )
         ax1.plot(
             utilities.lambda_to_nu(unextincted_spectrum_1.wave),
-            unextincted_spectrum_1.flux * utilities.lambda_to_nu(unextincted_spectrum_1.wave),
+            unextincted_spectrum_1.flux
+            * utilities.lambda_to_nu(unextincted_spectrum_1.wave),
             color="tab:blue",
             linestyle="dotted",
             linewidth=0.6,
@@ -480,7 +495,8 @@ for INTERVAL in INTERVALS:
             )
             ax1.plot(
                 utilities.lambda_to_nu(unextincted_spectrum_2.wave),
-                unextincted_spectrum_2.flux * utilities.lambda_to_nu(unextincted_spectrum_2.wave),
+                unextincted_spectrum_2.flux
+                * utilities.lambda_to_nu(unextincted_spectrum_2.wave),
                 color="tab:red",
                 linestyle="dotted",
                 linewidth=0.6,
@@ -573,8 +589,10 @@ for INTERVAL in INTERVALS:
     if plotmag:
         outfile = os.path.join(PLOTDIR, f"double_bb_mag_{INTERVAL}_observer_frame.png")
     else:
-        outfile = os.path.join(PLOTDIR, f"double_bb_nufnu_{INTERVAL}_observer_frame.png")
-    
+        outfile = os.path.join(
+            PLOTDIR, f"double_bb_nufnu_{INTERVAL}_observer_frame.png"
+        )
+
     loc = {0: "upper left", 1: "upper right", 2: "upper right"}
 
     plt.legend(fontsize=FONTSIZE_LEGEND, loc=loc[INTERVAL])

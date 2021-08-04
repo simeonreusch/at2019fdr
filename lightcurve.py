@@ -54,7 +54,7 @@ def convert_mJy_to_abmag(df):
 
 def plot_lightcurve(df, fluxplot=False):
     """ """
-    plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH/GOLDEN_RATIO))
+    plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH / GOLDEN_RATIO))
     # plt.figure(dpi=DPI, figsize=(FIG_WIDTH, 2.5))
     filter_wl = utilities.load_info_json("filter_wl")
     ax1 = plt.subplot(111)
@@ -153,7 +153,7 @@ def plot_lightcurve(df, fluxplot=False):
     loc_upper = (0.05, 0.65)
     loc_lower = (0.09, 0.009)
 
-    ax1.legend(fontsize=SMALL_FONTSIZE , ncol=2, framealpha=1, loc=loc_lower)
+    ax1.legend(fontsize=SMALL_FONTSIZE, ncol=2, framealpha=1, loc=loc_lower)
 
     for interval in MJD_INTERVALS:
         ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray")
@@ -393,7 +393,6 @@ if __name__ == "__main__":
     df_fermi = pd.read_csv(infile_fermi)
     df_vla = pd.read_csv(infile_vla)
     df_wise = pd.read_csv(infile_wise)
-
 
     df_ztf_forced = df_ztf_forced[["obsmjd", "mag", "mag_err", "filter"]]
     df_ztf_forced.rename(columns={"filter": "band"}, inplace=True)

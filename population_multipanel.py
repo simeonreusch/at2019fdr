@@ -38,13 +38,22 @@ FIG_WIDTH = 8
 BIG_FONTSIZE = 14
 SMALL_FONTSIZE = 8
 DPI = 400
-GOLDEN_RATIO = 1/1.618
+GOLDEN_RATIO = 1 / 1.618
 
 infile_tdes_baratheons = os.path.join(DATADIR, "tdes_and_baratheons.csv")
 
 INTERVALS = [1.75]
-ZTF_HZ = {1: utilities.lambda_to_nu(4722.74), 2: utilities.lambda_to_nu(6339.61), 3: utilities.lambda_to_nu(7886.13)}
-ZTF_HZ_LETTER = {"g": utilities.lambda_to_nu(4722.74), "r": utilities.lambda_to_nu(6339.61), "i": utilities.lambda_to_nu(7886.13)}
+ZTF_HZ = {
+    1: utilities.lambda_to_nu(4722.74),
+    2: utilities.lambda_to_nu(6339.61),
+    3: utilities.lambda_to_nu(7886.13),
+}
+ZTF_HZ_LETTER = {
+    "g": utilities.lambda_to_nu(4722.74),
+    "r": utilities.lambda_to_nu(6339.61),
+    "i": utilities.lambda_to_nu(7886.13),
+}
+
 
 def get_freq(filterletter):
     return ZTF_HZ_LETTER[filterletter]
@@ -64,9 +73,16 @@ def create_subplot(ax, max_distnr):
     bran_peakabsmag = float(df_bran["peakabs"].values[0])
     bran_peakmag = float(df_bran["peakmag"].values[0])
 
-    tywin_lumi = 0.75*utilities.abmag_to_flux(tywin_peakmag) * tywin_duration * 86400 * ZTF_HZ[2]
-    bran_lumi = 0.75*utilities.abmag_to_flux(bran_peakmag) * bran_duration * 86400 * ZTF_HZ[1]
-
+    tywin_lumi = (
+        0.75
+        * utilities.abmag_to_flux(tywin_peakmag)
+        * tywin_duration
+        * 86400
+        * ZTF_HZ[2]
+    )
+    bran_lumi = (
+        0.75 * utilities.abmag_to_flux(bran_peakmag) * bran_duration * 86400 * ZTF_HZ[1]
+    )
 
     SPECIAL_OBJECTS = {
         "tywin": {
@@ -136,8 +152,7 @@ def create_subplot(ax, max_distnr):
 
     ZTF_IDS_BARATHEONS = ["ZTF19aabbnzo"]
 
-
-    # df_tdes_baratheons = pd.read_csv(infile_tdes_baratheons)    
+    # df_tdes_baratheons = pd.read_csv(infile_tdes_baratheons)
     # durations_tdes_baratheons = []
     # peak_absmag_tdes_baratheons = []
     # peak_mag_tdes_baratheons = []
@@ -157,14 +172,12 @@ def create_subplot(ax, max_distnr):
     #         fids = np.asarray(ampel.queryresult[i][8])
     #         distnr = np.median(ampel.queryresult[i][9])
 
-
     #         if ztfid == "ZTF19aaiqmgl":
     #             obsjds_mask = np.where(obsjds < 58756 + 2400000.5)
     #             obsjds = obsjds[obsjds_mask]
     #             mags = mags[obsjds_mask]
     #             fids = fids[obsjds_mask]
 
-              
     #         peakmag = np.min(mags)
     #         peakfilter = fids[np.argmin(mags)]
 
@@ -200,7 +213,6 @@ def create_subplot(ax, max_distnr):
 
     #         # time integrated flux (est)
 
-
     # df_tdes_baratheons["duration"] = durations_tdes_baratheons
     # df_tdes_baratheons["peakabs"] = peak_absmag_tdes_baratheons
     # df_tdes_baratheons["peakmag"] = peak_mag_tdes_baratheons
@@ -209,13 +221,12 @@ def create_subplot(ax, max_distnr):
 
     # df_tdes_baratheons.query("name not in ['ZTF19aatubsj', 'ZTF18aabtxvd', 'ZTF18aahqkbt', 'ZTF18acpdvos', 'ZTF19aapreis']", inplace=True)
 
-
     # freq = []
     # for entry in df_tdes_baratheons["peakfilter"].values:
     #     freq.append(ZTF_HZ[entry])
 
     # # df.apply (lambda filterletter: get_freq(row), axis=0)
-    
+
     # # quit()
     # lumi = 0.75 * utilities.abmag_to_flux(df_tdes_baratheons["peakmag"].values) * df_tdes_baratheons["duration"].values * 86400 * freq
 
@@ -231,7 +242,9 @@ def create_subplot(ax, max_distnr):
         """ """
         df = df[[(x[0] != ">") for x in df["duration"]]]
         df = df[[(len(x) > 1) for x in df["peakabs"]]]
-        df = df.astype({"duration": "float32", "peakabs": "float32", "peakmag": "float32"})
+        df = df.astype(
+            {"duration": "float32", "peakabs": "float32", "peakmag": "float32"}
+        )
         df = df.reset_index()
         return df
 
@@ -291,7 +304,12 @@ def create_subplot(ax, max_distnr):
     for peakfilt in df["peakfilt"].values:
         freq.append(ZTF_HZ_LETTER[peakfilt])
 
-    df["lumi"] = utilities.abmag_to_flux(df["peakmag"].values) * df["duration"].values * 86400 * freq
+    df["lumi"] = (
+        utilities.abmag_to_flux(df["peakmag"].values)
+        * df["duration"].values
+        * 86400
+        * freq
+    )
 
     # Now we group
     df_sn = df.query("type in @SN").reset_index()
@@ -301,7 +319,6 @@ def create_subplot(ax, max_distnr):
     df_tde_bts = df.query("type in @TDE and ZTFID != 'ZTF19aapreis'").reset_index()
     df_tde = df_tdes_baratheons.query("type == 'TDE'")
     df_nova = df.query("type in @NOVA").reset_index()
-    
 
     durations_new = []
     names = []
@@ -310,15 +327,18 @@ def create_subplot(ax, max_distnr):
         if len(query) == 1:
             durations_new.append(query["duration"].values[0])
         else:
-            durations_new.append(df_tde.query(f"name == '{name}'")["duration"].values[0])
+            durations_new.append(
+                df_tde.query(f"name == '{name}'")["duration"].values[0]
+            )
         names.append(name)
-
 
     df_tde["duration"] = durations_new
 
     df_tde = df_tde.query(f"distnr < {max_distnr}")
 
-    df_baratheons = df_tdes_baratheons.query(f"type == 'Baratheon' and distnr < {max_distnr}")
+    df_baratheons = df_tdes_baratheons.query(
+        f"type == 'Baratheon' and distnr < {max_distnr}"
+    )
 
     if max_distnr > 0.19:
         label_baratheons = f"TDE-\nlike ({len(df_baratheons)+1})"
@@ -386,7 +406,6 @@ def create_subplot(ax, max_distnr):
     #     fontsize=AXIS_FONTSIZE-1,
     # )
 
-
     # ax1.set_ylabel("Peak absolute magnitude", fontsize=AXIS_FONTSIZE)
     # ax1.set_ylabel(r"Observed optical fluence [erg/cm$^2$]", fontsize=AXIS_FONTSIZE-1))
     # ax.set_ylabel(r"Time integrated optical flux (approx.) [erg/cm$^2$]", fontsize=AXIS_FONTSIZE-1)
@@ -444,10 +463,7 @@ def create_subplot(ax, max_distnr):
     #     fontsize=ANNOTATION_FONTSIZE,
     # )
 
-
-
-
-    legend = ax.legend(fontsize=ANNOTATION_FONTSIZE-5, loc=1)
+    legend = ax.legend(fontsize=ANNOTATION_FONTSIZE - 5, loc=1)
     for lh in legend.legendHandles:
         lh.set_alpha(1)
 
@@ -457,16 +473,16 @@ def create_subplot(ax, max_distnr):
 if __name__ == "__main__":
 
     FIG_WIDTH = 10
-    GOLDEN_RATIO = 1/1.618
+    GOLDEN_RATIO = 1 / 1.618
     ANNOTATION_FONTSIZE = 12
     AXIS_FONTSIZE = 14
 
-    fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH/2.8))
-    plt.subplots_adjust()#bottom = 0.1, left = 0.1, top = 0.81, right = 0.9)
+    fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH / 2.8))
+    plt.subplots_adjust()  # bottom = 0.1, left = 0.1, top = 0.81, right = 0.9)
     # lc_ax1 = fig.add_subplot(1,3)
-    sed1 = fig.add_subplot(1,3,1)
-    sed2 = fig.add_subplot(1,3,2)
-    sed3 = fig.add_subplot(1,3,3)
+    sed1 = fig.add_subplot(1, 3, 1)
+    sed2 = fig.add_subplot(1, 3, 2)
+    sed3 = fig.add_subplot(1, 3, 3)
 
     distances = [10000, 0.4, 0.2]
 
@@ -479,14 +495,14 @@ if __name__ == "__main__":
     ax3.set_title(f"Max host distance: {distances[2]} arcsec")
 
     for ax in [ax1, ax2, ax3]:
-        ax.set_ylim([20,15])
-        ax.set_xlim([5,450])
+        ax.set_ylim([20, 15])
+        ax.set_xlim([5, 450])
 
-    ax1.set_ylabel(r"Observed peak magnitude", fontsize=AXIS_FONTSIZE-1)
+    ax1.set_ylabel(r"Observed peak magnitude", fontsize=AXIS_FONTSIZE - 1)
 
     ax2.set_xlabel(
         r"Rest-frame duration ($F \geq \frac{F_{\text{peak}}}{2}$) [days]",
-        fontsize=AXIS_FONTSIZE-1,
+        fontsize=AXIS_FONTSIZE - 1,
     )
 
     plt.tight_layout()

@@ -19,7 +19,7 @@ from astropy.modeling.models import BlackBody
 REDSHIFT = 0.2666
 GLOBAL_AV = 0.3643711523794127
 GLOBAL_RV = 4.2694173002543225
- 
+
 # epoch 0 optical/UV:
 temp1 = 13578.089306104634
 
@@ -148,7 +148,9 @@ print(f"bolometric flux: {boloflux:.2e}")
 print(f"{lumi_from_boloflux:.2e}")
 
 print(lumi_from_boloflux_watt)
-radius = np.sqrt( lumi_from_boloflux_watt / 4 / np.pi / c.sigma_sb / temperature**4 ).to(u.cm)
+radius = np.sqrt(
+    lumi_from_boloflux_watt / 4 / np.pi / c.sigma_sb / temperature ** 4
+).to(u.cm)
 print(f"{radius:.2e}")
 
 spectrum2_ext, boloflux2_ext = utilities.blackbody_spectrum(
@@ -201,10 +203,11 @@ ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=10)
 ax1.set_xlabel("Frequency [Hz]", fontsize=10)
 ax1.set_xlim([5e13, 2e15])
 # ax1.set_xlim([-1,1])
-# 
+#
 ax1.set_ylim([9e-14, 1e-11])
 # ax1.set_ylim([-13,-9.5])
 plt.yscale("log")
+
 
 def convert_nu_fnu_log(nu_fnu):
     if isinstance(nu_fnu, astropy.units.quantity.Quantity):
@@ -212,13 +215,14 @@ def convert_nu_fnu_log(nu_fnu):
     nufnu = np.log10(nu_fnu)
     return nufnu
 
+
 ev = np.log10(utilities.nu_to_ev(nu.value))
 
 ax1.plot(
     utilities.lambda_to_nu(spectrumtest.wave),
-    # ev, 
+    # ev,
     spectrumtest.flux * nu,
-    # convert_nu_fnu_log(nu_fnu), 
+    # convert_nu_fnu_log(nu_fnu),
     # nu_fnu,
     label="test",
 )
@@ -233,23 +237,23 @@ ax1.plot(
     spectrum2_ext_z.flux * utilities.lambda_to_nu(spectrum2_ext_z.wave),
     # convert_nu_fnu_log(spectrum2_ext_z.flux * nu2_ext_z),
     linestyle="dotted",
-    # spectrum2_ext_z.flux * nu2_ext_z, 
+    # spectrum2_ext_z.flux * nu2_ext_z,
     label="extinction, rest frame",
 )
 ax1.plot(
     utilities.lambda_to_nu(spectrum2_ext.wave),
-    # ev, 
+    # ev,
     # convert_nu_fnu_log(spectrum2_ext.flux * nu2_ext),
-    spectrum2_ext.flux * utilities.lambda_to_nu(spectrum2_ext.wave), 
+    spectrum2_ext.flux * utilities.lambda_to_nu(spectrum2_ext.wave),
     linestyle="dotted",
     label="extinction, observer frame",
 )
 ax1.plot(
-    utilities.lambda_to_nu(spectrum_walter.wave), 
-    # ev, 
+    utilities.lambda_to_nu(spectrum_walter.wave),
+    # ev,
     # convert_nu_fnu_log(spectrum_walter.flux * nu2_ext),
-    spectrum_walter.flux * utilities.lambda_to_nu(spectrum_walter.wave), 
-    label="Original luminosity (no extinction, rest frame)"
+    spectrum_walter.flux * utilities.lambda_to_nu(spectrum_walter.wave),
+    label="Original luminosity (no extinction, rest frame)",
 )
 
 
@@ -266,7 +270,3 @@ ax2.set_xlabel(r"Energy [eV]", fontsize=8)
 plt.grid(which="both", alpha=0.15)
 plt.legend()
 plt.savefig("lumitest.png")
-
-
-
-

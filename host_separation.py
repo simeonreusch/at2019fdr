@@ -12,9 +12,15 @@ infile_coords = os.path.join("data", "coordinates.csv")
 
 df = pd.read_csv(infile_coords)
 
+
 def get_coords(band):
-	coords = SkyCoord(df.query(f"band == '{band}'")["RA"].values[0], df.query(f"band == '{band}'")["Dec"].values[0], unit="deg")
-	return coords
+    coords = SkyCoord(
+        df.query(f"band == '{band}'")["RA"].values[0],
+        df.query(f"band == '{band}'")["Dec"].values[0],
+        unit="deg",
+    )
+    return coords
+
 
 host_coords = "17 09 06.8532135309 +26 51 20.499469058"
 IC200530A_coords = ""

@@ -191,7 +191,9 @@ powerlaw_spectrum = utilities.powerlaw_spectrum(
 )
 
 ir_bb_specrum = utilities.blackbody_spectrum(
-    temperature=1160, scale=bb_scale / 25000, redshift=0,
+    temperature=1160,
+    scale=bb_scale / 25000,
+    redshift=0,
 )
 
 # Now we plot
@@ -252,11 +254,18 @@ if not plotmag:
     wl_powerlaw_nu = utilities.lambda_to_nu(wl_powerlaw_lambda)
     wl_ir_nu = utilities.lambda_to_nu(wl_ir_lambda)
 
-    flux_bb = utilities.flux_density_to_flux(wl_bb_lambda, flux_density_bb,)
-    flux_powerlaw = utilities.flux_density_to_flux(
-        wl_powerlaw_lambda, flux_density_powerlaw,
+    flux_bb = utilities.flux_density_to_flux(
+        wl_bb_lambda,
+        flux_density_bb,
     )
-    flux_ir = utilities.flux_density_to_flux(wl_ir_lambda, flux_density_ir,)
+    flux_powerlaw = utilities.flux_density_to_flux(
+        wl_powerlaw_lambda,
+        flux_density_powerlaw,
+    )
+    flux_ir = utilities.flux_density_to_flux(
+        wl_ir_lambda,
+        flux_density_ir,
+    )
 
     ax1.plot(
         wl_powerlaw_nu,

@@ -39,7 +39,9 @@ host_spectrum = pd.read_table(
     infile, names=["wl", "flux", "abmag"], sep="\s+", comment="#"
 )
 swift_observed = pd.read_csv(SWIFT_OBS_FILE)
-host_spectrum["abmag"] = utilities.flux_to_abmag(flux_nu=host_spectrum.flux, flux_nu_zp=0)
+host_spectrum["abmag"] = utilities.flux_to_abmag(
+    flux_nu=host_spectrum.flux, flux_nu_zp=0
+)
 swift_observed.drop(columns=["jd"], inplace=True)
 
 
@@ -68,14 +70,15 @@ for i, x in swift_observed.iterrows():
         abmag_err_observed,
         magzp=0,
         magzp_err=0,
-        )
+    )
 
     fluxmaggie_diff = fluxmaggie_observed - fluxmaggie_host
     fluxmaggie_err_diff = fluxmaggie_err_observed + fluxmaggie_err_host
 
-
     abmag_after_subtraction = utilities.flux_to_abmag(fluxmaggie_diff, 0)
-    abmag_err_after_subtraction = utilities.flux_err_to_abmag_err(fluxmaggie_diff, fluxmaggie_err_diff)
+    abmag_err_after_subtraction = utilities.flux_err_to_abmag_err(
+        fluxmaggie_diff, fluxmaggie_err_diff
+    )
 
     print("---------------------------------------------------------")
     print(f"abmag host: {abmag_host:.2f}")

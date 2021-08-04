@@ -40,11 +40,21 @@ if not os.path.exists(PLOTDIR_DISTNR):
 infile_tdes_baratheons = os.path.join(DATADIR, "tdes_and_baratheons.csv")
 
 INTERVALS = [1.75]
-ZTF_HZ = {1: utilities.lambda_to_nu(4722.74), 2: utilities.lambda_to_nu(6339.61), 3: utilities.lambda_to_nu(7886.13)}
-ZTF_HZ_LETTER = {"g": utilities.lambda_to_nu(4722.74), "r": utilities.lambda_to_nu(6339.61), "i": utilities.lambda_to_nu(7886.13)}
+ZTF_HZ = {
+    1: utilities.lambda_to_nu(4722.74),
+    2: utilities.lambda_to_nu(6339.61),
+    3: utilities.lambda_to_nu(7886.13),
+}
+ZTF_HZ_LETTER = {
+    "g": utilities.lambda_to_nu(4722.74),
+    "r": utilities.lambda_to_nu(6339.61),
+    "i": utilities.lambda_to_nu(7886.13),
+}
+
 
 def get_freq(filterletter):
     return ZTF_HZ_LETTER[filterletter]
+
 
 # INTERVALS = np.linspace(0,1.75,875)
 STEPS = len(INTERVALS)
@@ -63,9 +73,16 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
     bran_peakabsmag = float(df_bran["peakabs"].values[0])
     bran_peakmag = float(df_bran["peakmag"].values[0])
 
-    tywin_lumi = 0.75*utilities.abmag_to_flux(tywin_peakmag) * tywin_duration * 86400 * ZTF_HZ[2]
-    bran_lumi = 0.75*utilities.abmag_to_flux(bran_peakmag) * bran_duration * 86400 * ZTF_HZ[1]
-
+    tywin_lumi = (
+        0.75
+        * utilities.abmag_to_flux(tywin_peakmag)
+        * tywin_duration
+        * 86400
+        * ZTF_HZ[2]
+    )
+    bran_lumi = (
+        0.75 * utilities.abmag_to_flux(bran_peakmag) * bran_duration * 86400 * ZTF_HZ[1]
+    )
 
     SPECIAL_OBJECTS = {
         "tywin": {
@@ -135,8 +152,7 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
 
     ZTF_IDS_BARATHEONS = ["ZTF19aabbnzo"]
 
-
-    df_tdes_baratheons = pd.read_csv(infile_tdes_baratheons)    
+    df_tdes_baratheons = pd.read_csv(infile_tdes_baratheons)
     durations_tdes_baratheons = []
     peak_absmag_tdes_baratheons = []
     peak_mag_tdes_baratheons = []
@@ -155,14 +171,12 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
             fids = np.asarray(ampel.queryresult[i][8])
             distnr = np.median(ampel.queryresult[i][9])
 
-
             if ztfid == "ZTF19aaiqmgl":
                 obsjds_mask = np.where(obsjds < 58756 + 2400000.5)
                 obsjds = obsjds[obsjds_mask]
                 mags = mags[obsjds_mask]
                 fids = fids[obsjds_mask]
 
-              
             peakmag = np.min(mags)
             peakfilter = fids[np.argmin(mags)]
 
@@ -172,7 +186,7 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
 
             abs_fluxes = [utilities.abmag_to_flux(absmag) for absmag in absmags]
 
-            half_absfluxes = [flux/2 for flux in abs_fluxes]
+            half_absfluxes = [flux / 2 for flux in abs_fluxes]
 
             peak_absmag = np.min(absmags)
             peak_absmag_index = np.argmin(absmags)
@@ -183,7 +197,7 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
             in_range = []
 
             for i, flux in enumerate(abs_fluxes):
-                if flux >= half_peakflux: #and fids[i] == peak_absmag_filter:
+                if flux >= half_peakflux:  # and fids[i] == peak_absmag_filter:
                     in_range.append(i)
 
             min_jd = obsjds[min(in_range)]
@@ -197,24 +211,30 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
 
             # time integrated flux (est)
 
-
     df_tdes_baratheons["duration"] = durations_tdes_baratheons
     df_tdes_baratheons["peakabs"] = peak_absmag_tdes_baratheons
     df_tdes_baratheons["peakmag"] = peak_mag_tdes_baratheons
     df_tdes_baratheons["peakfilter"] = peakfilter_tdes_baratheons
 
-    df_tdes_baratheons.query("name not in ['ZTF19aatubsj', 'ZTF18aabtxvd', 'ZTF18aahqkbt', 'ZTF18acpdvos', 'ZTF19aapreis']", inplace=True)
-
-
+    df_tdes_baratheons.query(
+        "name not in ['ZTF19aatubsj', 'ZTF18aabtxvd', 'ZTF18aahqkbt', 'ZTF18acpdvos', 'ZTF19aapreis']",
+        inplace=True,
+    )
 
     freq = []
     for entry in df_tdes_baratheons["peakfilter"].values:
         freq.append(ZTF_HZ[entry])
 
     # df.apply (lambda filterletter: get_freq(row), axis=0)
-    
+
     # quit()
-    lumi = 0.75 * utilities.abmag_to_flux(df_tdes_baratheons["peakmag"].values) * df_tdes_baratheons["duration"].values * 86400 * freq
+    lumi = (
+        0.75
+        * utilities.abmag_to_flux(df_tdes_baratheons["peakmag"].values)
+        * df_tdes_baratheons["duration"].values
+        * 86400
+        * freq
+    )
 
     df_tdes_baratheons["lumi"] = lumi
 
@@ -225,7 +245,9 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
         """ """
         df = df[[(x[0] != ">") for x in df["duration"]]]
         df = df[[(len(x) > 1) for x in df["peakabs"]]]
-        df = df.astype({"duration": "float32", "peakabs": "float32", "peakmag": "float32"})
+        df = df.astype(
+            {"duration": "float32", "peakabs": "float32", "peakmag": "float32"}
+        )
         df = df.reset_index()
         return df
 
@@ -280,14 +302,17 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
         f"{len(df)} objects of {len_before_cut} survive the distnr-cut (distnr <= {MAX_DISTNR:.2f})"
     )
 
-
-
     freq = []
 
     for peakfilt in df["peakfilt"].values:
         freq.append(ZTF_HZ_LETTER[peakfilt])
 
-    df["lumi"] = utilities.abmag_to_flux(df["peakmag"].values) * df["duration"].values * 86400 * freq
+    df["lumi"] = (
+        utilities.abmag_to_flux(df["peakmag"].values)
+        * df["duration"].values
+        * 86400
+        * freq
+    )
 
     # Now we group
     df_sn = df.query("type in @SN").reset_index()
@@ -297,7 +322,6 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
     df_tde_bts = df.query("type in @TDE and ZTFID != 'ZTF19aapreis'").reset_index()
     df_tde = df_tdes_baratheons.query("type == 'TDE'")
     df_nova = df.query("type in @NOVA").reset_index()
-    
 
     durations_new = []
     names = []
@@ -306,12 +330,12 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
         if len(query) == 1:
             durations_new.append(query["duration"].values[0])
         else:
-            durations_new.append(df_tde.query(f"name == '{name}'")["duration"].values[0])
+            durations_new.append(
+                df_tde.query(f"name == '{name}'")["duration"].values[0]
+            )
         names.append(name)
 
-
     df_tde["duration"] = durations_new
-
 
     plotparams = {
         "Baratheons": {
@@ -377,11 +401,14 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
     # )
     ax1.set_xlabel(
         r"Rest-frame duration ($F \geq \frac{F_{\text{peak}}}{2}$) [days]",
-        fontsize=AXIS_FONTSIZE-1,
+        fontsize=AXIS_FONTSIZE - 1,
     )
     # ax1.set_ylabel("Peak absolute magnitude", fontsize=AXIS_FONTSIZE)
     # ax1.set_ylabel(r"Observed optical fluence [erg/cm$^2$]", fontsize=AXIS_FONTSIZE-1))
-    ax1.set_ylabel(r"Time integrated optical flux (approx.) [erg/cm$^2$]", fontsize=AXIS_FONTSIZE-1)
+    ax1.set_ylabel(
+        r"Time integrated optical flux (approx.) [erg/cm$^2$]",
+        fontsize=AXIS_FONTSIZE - 1,
+    )
     ax1.set_xscale("log")
     ax1.set_yscale("log")
     # ax1.set_ylim([-5, -25])
@@ -434,12 +461,16 @@ for global_i, MAX_DISTNR in enumerate(INTERVALS):
     #     fontsize=ANNOTATION_FONTSIZE,
     # )
 
-    legend = plt.legend(fontsize=ANNOTATION_FONTSIZE-1, loc=4)
+    legend = plt.legend(fontsize=ANNOTATION_FONTSIZE - 1, loc=4)
     for lh in legend.legendHandles:
         lh.set_alpha(1)
     if STEPS == 1:
-        outfile_png = os.path.join(PLOTDIR, f"population_{INTERVALS[0]}_flux_duration.png")
-        outfile_pdf = os.path.join(PLOTDIR, f"population_{INTERVALS[0]}_flux_duration.pdf")
+        outfile_png = os.path.join(
+            PLOTDIR, f"population_{INTERVALS[0]}_flux_duration.png"
+        )
+        outfile_pdf = os.path.join(
+            PLOTDIR, f"population_{INTERVALS[0]}_flux_duration.pdf"
+        )
     else:
         outfile_png = os.path.join(PLOTDIR_DISTNR, f"{global_i:04d}_flux_duration.png")
         outfile_pdf = os.path.join(PLOTDIR_DISTNR, f"{global_i:04d}_flux_duration.pdf")

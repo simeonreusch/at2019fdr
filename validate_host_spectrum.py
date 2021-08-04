@@ -57,7 +57,12 @@ colors = {
 }
 
 DATES = ["2020_07_01", "2020_09_29", "2021_02_04", "2021_05_28"]
-DATE_TO_ABBR_MJD = {"2020_07_01": 59031, "2020_09_29": 59121, "2021_02_04": 59249, "2021_05_28": 59362}
+DATE_TO_ABBR_MJD = {
+    "2020_07_01": 59031,
+    "2020_09_29": 59121,
+    "2021_02_04": 59249,
+    "2021_05_28": 59362,
+}
 DATES_ISO = [date.replace("_", "-") + "T00:00:00" for date in DATES]
 DATES_MJD = [Time(date_iso, format="isot", scale="utc").mjd for date_iso in DATES_ISO]
 
@@ -197,7 +202,7 @@ for i, DATE in enumerate(DATES):
         date_mjd_abbr = DATE_TO_ABBR_MJD[DATE]
 
         # abmag_sextractor_both = df_p200_sextractor.query(f"obsmjd == {date_mjd_abbr}")[
-            # f"{band}_mag_iso_AB"
+        # f"{band}_mag_iso_AB"
         # ].values[0]
 
         vegamag_host_1 = df_p200_galfit_ref_epoch1.loc[DATES_MJD[i]][

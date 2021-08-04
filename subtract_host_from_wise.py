@@ -56,14 +56,12 @@ wise_median_vegamag_errs = {}
 for band in wise_prepeak.band.unique():
     df_temp = wise_prepeak.query(f"band == '{band}'")
     median_vegamag = df_temp.mag_vega.median()
-    sigma=np.std(df_temp.mag_vega.values)
-    n=len(df_temp.mag_vega.values)
+    sigma = np.std(df_temp.mag_vega.values)
+    n = len(df_temp.mag_vega.values)
     median_vegamag_err = 1.253 * sigma / np.sqrt(n)
 
     wise_median_vegamags.update({band: median_vegamag})
     wise_median_vegamag_errs.update({band: median_vegamag_err})
-
-
 
 
 abmags_transient = []
@@ -90,10 +88,7 @@ for i, x in wise_transient.iterrows():
 
     flux_host = utilities.abmag_to_flux(abmag_host)
     flux_err_host = utilities.abmag_err_to_flux_err(
-        abmag_host, 
-        vegamag_err_host,
-        magzp=None,
-        magzp_err=None
+        abmag_host, vegamag_err_host, magzp=None, magzp_err=None
     )
 
     flux_observed = utilities.abmag_to_flux(abmag_observed)

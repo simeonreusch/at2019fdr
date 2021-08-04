@@ -200,7 +200,10 @@ ir_bb_specrum, bb_ir_flux = utilities.blackbody_spectrum(
 )
 
 bolo_lumi_bb_opt = utilities.calculate_bolometric_luminosity(
-    bolometric_flux=bb_opt_flux, temperature=bb_temp, scale=bb_scale, redshift=REDSHIFT,
+    bolometric_flux=bb_opt_flux,
+    temperature=bb_temp,
+    scale=bb_scale,
+    redshift=REDSHIFT,
 )[0]
 bolo_lumi_bb_ir = utilities.calculate_bolometric_luminosity(
     bolometric_flux=bb_ir_flux,
@@ -290,11 +293,18 @@ if not plotmag:
     wl_powerlaw_nu = utilities.lambda_to_nu(wl_powerlaw_lambda)
     wl_ir_nu = utilities.lambda_to_nu(wl_ir_lambda)
 
-    flux_bb = utilities.flux_density_to_flux(wl_bb_lambda, flux_density_bb,)
-    flux_powerlaw = utilities.flux_density_to_flux(
-        wl_powerlaw_lambda, flux_density_powerlaw,
+    flux_bb = utilities.flux_density_to_flux(
+        wl_bb_lambda,
+        flux_density_bb,
     )
-    flux_ir = utilities.flux_density_to_flux(wl_ir_lambda, flux_density_ir,)
+    flux_powerlaw = utilities.flux_density_to_flux(
+        wl_powerlaw_lambda,
+        flux_density_powerlaw,
+    )
+    flux_ir = utilities.flux_density_to_flux(
+        wl_ir_lambda,
+        flux_density_ir,
+    )
 
     # ax1.plot(
     #     wl_powerlaw_nu,

@@ -52,7 +52,7 @@ GLOBAL_RV = 4.2694173002543225
 
 REFIT = False
 FIT = 3
-INTERVALS = [0,1,2]
+INTERVALS = [0, 1, 2]
 EXTINCTIONFIT_INTERVAL = 4
 
 
@@ -308,7 +308,6 @@ for INTERVAL in INTERVALS:
         extinction_av = GLOBAL_AV
         extinction_rv = GLOBAL_RV
 
-
     fitted_spectrum_1, bolo_flux_1 = utilities.blackbody_spectrum(
         temperature=fitresult["temp1"],
         scale=fitresult["scale1"],
@@ -401,9 +400,9 @@ for INTERVAL in INTERVALS:
             nu = utilities.lambda_to_nu(filter_wl[key])
 
             ax1.errorbar(
-                nu*(1+REDSHIFT),
-                df_red.flux.values * nu*(1+REDSHIFT),
-                df_red.flux_err.values * nu*(1+REDSHIFT),
+                nu * (1 + REDSHIFT),
+                df_red.flux.values * nu * (1 + REDSHIFT),
+                df_red.flux_err.values * nu * (1 + REDSHIFT),
                 color=cmap[key],
                 label=filterlabel[key],
                 fmt=".",
@@ -413,15 +412,18 @@ for INTERVAL in INTERVALS:
 
         # OPTICAL / UV
         ax1.plot(
-            utilities.lambda_to_nu(fitted_spectrum_1.wave)*(1+REDSHIFT),
-            fitted_spectrum_1.flux * utilities.lambda_to_nu(fitted_spectrum_1.wave)*(1+REDSHIFT),
+            utilities.lambda_to_nu(fitted_spectrum_1.wave) * (1 + REDSHIFT),
+            fitted_spectrum_1.flux
+            * utilities.lambda_to_nu(fitted_spectrum_1.wave)
+            * (1 + REDSHIFT),
             color="tab:blue",
             linestyle="dotted",
             label=f"1 extincted",
         )
         ax1.plot(
             utilities.lambda_to_nu(unextincted_spectrum_1.wave),
-            unextincted_spectrum_1.flux * utilities.lambda_to_nu(unextincted_spectrum_1.wave),
+            unextincted_spectrum_1.flux
+            * utilities.lambda_to_nu(unextincted_spectrum_1.wave),
             color="tab:blue",
             linestyle="dotted",
             linewidth=0.6,
@@ -430,23 +432,28 @@ for INTERVAL in INTERVALS:
 
         if FIT == 3:
             ax1.plot(
-                utilities.lambda_to_nu(fitted_spectrum_2.wave)*(1+REDSHIFT),
-                fitted_spectrum_2.flux * utilities.lambda_to_nu(fitted_spectrum_2.wave)*(1+REDSHIFT),
+                utilities.lambda_to_nu(fitted_spectrum_2.wave) * (1 + REDSHIFT),
+                fitted_spectrum_2.flux
+                * utilities.lambda_to_nu(fitted_spectrum_2.wave)
+                * (1 + REDSHIFT),
                 color="tab:red",
                 linestyle="dotted",
                 label=f"2 extincted",
             )
             ax1.plot(
                 utilities.lambda_to_nu(unextincted_spectrum_2.wave),
-                unextincted_spectrum_2.flux * utilities.lambda_to_nu(unextincted_spectrum_2.wave),
+                unextincted_spectrum_2.flux
+                * utilities.lambda_to_nu(unextincted_spectrum_2.wave),
                 color="tab:red",
                 linestyle="dotted",
                 linewidth=0.6,
                 label=f"2 unextincted",
             )
             ax1.plot(
-                utilities.lambda_to_nu(combined_spectrum.wave)*(1+REDSHIFT),
-                combined_spectrum.flux * utilities.lambda_to_nu(combined_spectrum.wave)*(1+REDSHIFT),
+                utilities.lambda_to_nu(combined_spectrum.wave) * (1 + REDSHIFT),
+                combined_spectrum.flux
+                * utilities.lambda_to_nu(combined_spectrum.wave)
+                * (1 + REDSHIFT),
                 color="black",
                 # linestyle="dotted",
                 label=rf"combined spectrum",
@@ -532,7 +539,7 @@ for INTERVAL in INTERVALS:
         outfile = os.path.join(PLOTDIR, f"double_bb_mag_{INTERVAL}_sourceframe.png")
     else:
         outfile = os.path.join(PLOTDIR, f"double_bb_nufnu_{INTERVAL}_sourceframe.png")
-    
+
     loc = {0: "upper left", 1: "upper right", 2: "upper right"}
 
     plt.legend(fontsize=FONTSIZE_LEGEND, loc=loc[INTERVAL])

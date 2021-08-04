@@ -14,6 +14,7 @@ from scipy.signal import savgol_filter, convolve
 from scipy.interpolate import splev, splrep
 from lmfit import Model, Parameters, Minimizer, report_fit, minimize
 from astropy.cosmology import FlatLambdaCDM
+
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 nice_fonts = {
@@ -30,7 +31,7 @@ PLOT = True
 
 DPI = 400
 FIG_WIDTH = 6
-GOLDEN_RATIO = 1/1.618
+GOLDEN_RATIO = 1 / 1.618
 ANNOTATION_FONTSIZE = 12
 AXIS_FONTSIZE = 14
 REDSHIFT = 0.2666
@@ -45,11 +46,11 @@ PLOT_DIR = "plots"
 
 df_fit = pd.read_csv(infile_fitdf)
 
-opt_ir_delay_day = (MJD_IR_PEAK - MJD_OPT_PEAK)*u.day
+opt_ir_delay_day = (MJD_IR_PEAK - MJD_OPT_PEAK) * u.day
 
 opt_ir_delay_s = opt_ir_delay_day.to(u.s)
 
-light_travel_distance = opt_ir_delay_s*const.c
+light_travel_distance = opt_ir_delay_s * const.c
 
 light_travel_distance = light_travel_distance.to(u.cm)
 
@@ -61,17 +62,14 @@ fitted_max_ir_radius = np.max(df_fit["infrared_radius"].values)
 fitted_max_ir_radius = fitted_max_ir_radius * u.cm
 
 
-
 def equation_12(T=1850, R=0.1):
-    """ 
+    """
     T in Kelvin
     Radius in parsec
     """
-    L_abs = 5 * 10**44 * (R/0.1)**2 * (T/1850)**5.8 * u.erg / u.s
+    L_abs = 5 * 10 ** 44 * (R / 0.1) ** 2 * (T / 1850) ** 5.8 * u.erg / u.s
 
     return L_abs
-
-
 
 
 infile_lc = os.path.join("data", "lightcurves", "full_lightcurve.csv")
@@ -126,6 +124,7 @@ for i, mjd in enumerate(mjds):
 
 # Now we create a box function
 
+
 def minimizer_function(params, x, data=None, data_err=None, **kwargs):
     delay = params["delay"]
     amplitude = params["amplitude"]
@@ -136,12 +135,14 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
 
     _boxfunc = []
     for i, mjd in enumerate(mjds):
-        if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2*delay)):
+        if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * delay)):
             _boxfunc.append(0)
         else:
             _boxfunc.append(1)
 
-    _convolution = convolve(_spline_g, _boxfunc, mode="same") / sum(_boxfunc)*amplitude
+    _convolution = (
+        convolve(_spline_g, _boxfunc, mode="same") / sum(_boxfunc) * amplitude
+    )
 
     spline_conv = splrep(mjds, _convolution, s=1e-30)
 
@@ -151,27 +152,26 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
         j = np.where(mjds == mjd)
         flux_err = data_err[i]
 
-        fitval = splev(mjd+delay, spline_conv) 
+        fitval = splev(mjd + delay, spline_conv)
 
         delta = fitval - flux
 
-        res = delta/flux_err
+        res = delta / flux_err
 
         residuals.append(res)
 
-
     residuals = np.array(residuals)
-    
-    chisq = np.sum(residuals**2)
-    
+
+    chisq = np.sum(residuals ** 2)
+
     print(chisq)
 
     return residuals
 
 
 params = Parameters()
-params.add("delay", min=140, max=220, value=180)#, min=50, max=350)
-params.add("amplitude", min=0.8, max=1.8, value=1.0)#, min=0.5, max=2.)
+params.add("delay", min=140, max=220, value=180)  # , min=50, max=350)
+params.add("amplitude", min=0.8, max=1.8, value=1.0)  # , min=0.5, max=2.)
 
 x = obsmjd_w1
 data = nu_fnu_w1
@@ -187,6 +187,7 @@ minimizer = Minimizer(
 
 if FIT:
     FITMETHOD = "brute"
+
     if FITMETHOD == "brute":
         res = minimizer.minimize(method=FITMETHOD, Ns=50, workers=1)
     else:
@@ -210,38 +211,61 @@ if PLOT:
 
     boxfunc = []
     for i, mjd in enumerate(mjds):
-        if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2*delay)):
+        if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * delay)):
             boxfunc.append(0)
         else:
             boxfunc.append(1)
 
     # We calculate the convolution
-    convolution = convolve(spline_final, boxfunc, mode="same") / sum(boxfunc)*amplitude
+    convolution = (
+        convolve(spline_final, boxfunc, mode="same") / sum(boxfunc) * amplitude
+    )
 
     # And now we plot
 
-
-    fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH*GOLDEN_RATIO))
-    ax = fig.add_subplot(1,1,1)
+    fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * GOLDEN_RATIO))
+    ax = fig.add_subplot(1, 1, 1)
     ax2 = ax.twinx()
-    ax.set_xlim([58000-MJD_OPT_PEAK+500, 59800-MJD_OPT_PEAK])
+    ax.set_xlim([58000 - MJD_OPT_PEAK + 500, 59800 - MJD_OPT_PEAK])
     ax.set_yscale("log")
     ax.set_ylim([1e-14, 1e-11])
     ax.set_xlabel("Days since peak")
     ax.set_ylabel(r"$\nu F_{\nu}$ [erg/s/cm$^2$]")
     ax2.set_ylabel("Transfer function")
-    ax.errorbar(obsmjd_g-MJD_OPT_PEAK, nu_fnu_g, nu_fnu_err_g, color="tab:green", alpha=0.5, label="ZTF g-band", fmt=".")
-    ax.errorbar(obsmjd_w1-MJD_OPT_PEAK, nu_fnu_w1, nu_fnu_err_w1, color="tab:blue", label="WISE W1", fmt=".", markersize=1)
+    ax.errorbar(
+        obsmjd_g - MJD_OPT_PEAK,
+        nu_fnu_g,
+        nu_fnu_err_g,
+        color="tab:green",
+        alpha=0.5,
+        label="ZTF g-band",
+        fmt=".",
+    )
+    ax.errorbar(
+        obsmjd_w1 - MJD_OPT_PEAK,
+        nu_fnu_w1,
+        nu_fnu_err_w1,
+        color="tab:blue",
+        label="WISE W1",
+        fmt=".",
+        markersize=1,
+    )
 
     # ax.errorbar(obsmjd_w2-MJD_OPT_PEAK, nu_fnu_w2, nu_fnu_err_w2, color="tab:red", label="WISE W2", fmt=".")
 
+    ax.plot(mjds - MJD_OPT_PEAK, spline_final, c="green")
 
-    ax.plot(mjds-MJD_OPT_PEAK, spline_final, c="green")
-
-    ax.plot(mjds-MJD_OPT_PEAK+delay, convolution, c="tab:blue", alpha=1)
+    ax.plot(mjds - MJD_OPT_PEAK + delay, convolution, c="tab:blue", alpha=1)
     # ax.plot(mjds-MJD_OPT_PEAK+delay, spline_eval_conv, c="black")
 
-    ax2.plot(mjds-MJD_OPT_PEAK+delay, boxfunc, ls="dashed", c="black", alpha=0.3, label="transfer function")
+    ax2.plot(
+        mjds - MJD_OPT_PEAK + delay,
+        boxfunc,
+        ls="dashed",
+        c="black",
+        alpha=0.3,
+        label="transfer function",
+    )
     # ax.plot(mjds-MJD_OPT_PEAK, convolution, c="red")
 
     ax.legend(loc=2)
@@ -315,10 +339,7 @@ d = d.to(u.cm).value
 L_abs_mod = max_of_g * 4 * np.pi * d ** 2
 
 
-
-
 spline_dust = spline_final / max(spline_final) * L_dust_frombb.value
- 
 
 
 # spline_ir = spline_final / max_of_g * L_abs_mod
@@ -331,11 +352,8 @@ print(f"E_dust (from peak IR BB lumi) = {E_dust:.2e}")
 print("--------------------")
 # print(f"log E_dust = {log10E_dust:.2f}")
 
-f_paper = E_dust/E_abs_paper
+f_paper = E_dust / E_abs_paper
 f_frombb = E_dust / E_abs_frombb
 
 print(f"Covering factor (from paper eq. 12) = {f_paper:.2f}")
 print(f"Covering factor (from BB lumis) = {f_frombb:.2f}")
-
-
-

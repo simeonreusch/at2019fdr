@@ -2,7 +2,7 @@
 # Author: Simeon Reusch (simeon.reusch@desy.de)
 # License: BSD-3-Clause
 
-import numpy as np 
+import numpy as np
 import astropy
 from astropy.cosmology import Planck18 as cosmo_planck
 from astropy.cosmology import FlatLambdaCDM

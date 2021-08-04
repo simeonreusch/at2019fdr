@@ -67,6 +67,7 @@ def convert_mJy_to_abmag(df):
     df.drop(columns=["fnu_mJy", "fnu_mJy_err"], inplace=True)
     return df
 
+
 def create_sed(ax, epoch):
 
     mjd_interval = MJD_INTERVALS[epoch]
@@ -90,22 +91,21 @@ def create_sed(ax, epoch):
     )
 
     fitted_spectrum_1_lower, bolo_flux_1_lower = utilities.blackbody_spectrum(
-        temperature=params["temp1"]-params["temp1_err"],
-        scale=params["scale1"]+params["scale1_err"],
+        temperature=params["temp1"] - params["temp1_err"],
+        scale=params["scale1"] + params["scale1_err"],
         extinction_av=GLOBAL_AV,
         extinction_rv=GLOBAL_RV,
         redshift=REDSHIFT,
         get_bolometric_flux=True,
     )
     fitted_spectrum_1_upper, bolo_flux_1_upper = utilities.blackbody_spectrum(
-        temperature=params["temp1"]+params["temp1_err"],
-        scale=params["scale1"]-params["scale1_err"],
+        temperature=params["temp1"] + params["temp1_err"],
+        scale=params["scale1"] - params["scale1_err"],
         extinction_av=GLOBAL_AV,
         extinction_rv=GLOBAL_RV,
         redshift=REDSHIFT,
         get_bolometric_flux=True,
     )
-
 
     fitted_spectrum_2, bolo_flux_2 = utilities.blackbody_spectrum(
         temperature=params["temp2"],
@@ -116,16 +116,16 @@ def create_sed(ax, epoch):
         get_bolometric_flux=True,
     )
     fitted_spectrum_2_lower, bolo_flux_2_lower = utilities.blackbody_spectrum(
-        temperature=params["temp2"]-params["temp2_err"],
-        scale=params["scale2"]+params["scale2_err"],
+        temperature=params["temp2"] - params["temp2_err"],
+        scale=params["scale2"] + params["scale2_err"],
         extinction_av=GLOBAL_AV,
         extinction_rv=GLOBAL_RV,
         redshift=REDSHIFT,
         get_bolometric_flux=True,
     )
     fitted_spectrum_2_upper, bolo_flux_2_upper = utilities.blackbody_spectrum(
-        temperature=params["temp2"]+params["temp2_err"],
-        scale=params["scale2"]-params["scale2_err"],
+        temperature=params["temp2"] + params["temp2_err"],
+        scale=params["scale2"] - params["scale2_err"],
         extinction_av=GLOBAL_AV,
         extinction_rv=GLOBAL_RV,
         redshift=REDSHIFT,
@@ -186,14 +186,24 @@ def create_sed(ax, epoch):
         color="black",
     )
 
-
     # ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_1.wave), y2=fitted_spectrum_1_lower.flux * utilities.lambda_to_nu(fitted_spectrum_1_lower.wave), y1=fitted_spectrum_1_upper.flux * utilities.lambda_to_nu(fitted_spectrum_1_upper.wave), alpha=0.3, facecolor="tab:blue")
 
     # ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_2.wave), y2=fitted_spectrum_2_lower.flux * utilities.lambda_to_nu(fitted_spectrum_2_lower.wave), y1=fitted_spectrum_2_upper.flux * utilities.lambda_to_nu(fitted_spectrum_2_upper.wave), alpha=0.3, facecolor="tab:red")
 
-
-
-    telescopebands = ['WISE+W2', 'WISE+W1', 'P200+Ks', 'P200+H', 'P200+J', 'P48+ZTF_i', 'P48+ZTF_r', 'P48+ZTF_g', 'Swift+U', 'Swift+UVW1', 'Swift+UVM2','Swift+UVW2']
+    telescopebands = [
+        "WISE+W2",
+        "WISE+W1",
+        "P200+Ks",
+        "P200+H",
+        "P200+J",
+        "P48+ZTF_i",
+        "P48+ZTF_r",
+        "P48+ZTF_g",
+        "Swift+U",
+        "Swift+UVW1",
+        "Swift+UVM2",
+        "Swift+UVW2",
+    ]
 
     for telescopeband in telescopebands:
 
@@ -206,10 +216,10 @@ def create_sed(ax, epoch):
         flux_err = utilities.abmag_err_to_flux_err(mag, mag_err)
 
         if telescopeband == "P48+ZTF_i":
-            flux = flux/H_CORRECTION_I_BAND
+            flux = flux / H_CORRECTION_I_BAND
 
         nu = utilities.lambda_to_nu(filter_wl[telescopeband])
-        
+
         markers = {"WISE": "p", "P200": "s", "P48": ".", "Swift": "D"}
         markersizes = {"WISE": 5, "P200": 4, "P48": 8, "Swift": 4}
 
@@ -224,25 +234,54 @@ def create_sed(ax, epoch):
         )
 
     if epoch == 1:
-        ax.legend(ncol=6,bbox_to_anchor=(1.2, 2.82),fancybox=True, shadow=False, fontsize=9, edgecolor="black")
+        ax.legend(
+            ncol=6,
+            bbox_to_anchor=(1.2, 2.82),
+            fancybox=True,
+            shadow=False,
+            fontsize=9,
+            edgecolor="black",
+        )
     if epoch == 3:
-        ax.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE-2)
+        ax.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE - 2)
     # ax2 = ax.secondary_xaxis(
     #     "top", functions=(utilities.nu_to_ev, utilities.ev_to_nu)
     # )
     # ax2.set_xlabel(r"Energy [eV]")
 
-
-    ax.axvspan(utilities.lambda_to_nu(MIR[0]), utilities.lambda_to_nu(MIR[1]), color="red", alpha=0.1, lw=0)
-    ax.axvspan(utilities.lambda_to_nu(NIR[0]), utilities.lambda_to_nu(NIR[1]), color="orange", alpha=0.1, lw=0)
-    ax.axvspan(utilities.lambda_to_nu(OPT[0]), utilities.lambda_to_nu(OPT[1]), color="green", alpha=0.1, lw=0)
-    ax.axvspan(utilities.lambda_to_nu(UV[0]), utilities.lambda_to_nu(UV[1]), color="violet", alpha=0.1, lw=0)
-
+    ax.axvspan(
+        utilities.lambda_to_nu(MIR[0]),
+        utilities.lambda_to_nu(MIR[1]),
+        color="red",
+        alpha=0.1,
+        lw=0,
+    )
+    ax.axvspan(
+        utilities.lambda_to_nu(NIR[0]),
+        utilities.lambda_to_nu(NIR[1]),
+        color="orange",
+        alpha=0.1,
+        lw=0,
+    )
+    ax.axvspan(
+        utilities.lambda_to_nu(OPT[0]),
+        utilities.lambda_to_nu(OPT[1]),
+        color="green",
+        alpha=0.1,
+        lw=0,
+    )
+    ax.axvspan(
+        utilities.lambda_to_nu(UV[0]),
+        utilities.lambda_to_nu(UV[1]),
+        color="violet",
+        alpha=0.1,
+        lw=0,
+    )
 
     ax.grid(which="both", alpha=0.15)
 
     return ax
-    
+
 
 if __name__ == "__main__":
 
@@ -251,12 +290,11 @@ if __name__ == "__main__":
     BIG_FONTSIZE = 14
     SMALL_FONTSIZE = 8
     DPI = 400
-    GOLDEN_RATIO = 1/1.618
+    GOLDEN_RATIO = 1 / 1.618
     GLOBAL_AV = 0.3643711523794127
     GLOBAL_RV = 4.2694173002543225
 
     H_CORRECTION_I_BAND = 1.0495345056821688
-
 
     CURRENT_FILE_DIR = os.path.dirname(__file__)
     DATA_DIR = os.path.abspath(os.path.join(CURRENT_FILE_DIR, "data"))
@@ -265,19 +303,15 @@ if __name__ == "__main__":
     LC_DIR = os.path.join(DATA_DIR, "lightcurves")
     FITDIR = os.path.join("fit", "double_blackbody")
 
-
     infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve.csv")
 
     df = pd.read_csv(infile_lightcurve)
     df_ztf_g = df.query("telescope == 'P48' and band == 'ZTF_g'")
     instrband = "P48+ZTF_g"
 
+    fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * 0.58))
 
-
-    fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH*0.58))
-
-
-    plt.subplots_adjust(bottom = 0.12, left = 0.12, top = 0.86, right = 0.9)
+    plt.subplots_adjust(bottom=0.12, left=0.12, top=0.86, right=0.9)
     # lc_ax1 = fig.add_subplot(3,4,(1,11))
     # sed1 = fig.add_subplot(3,4,4)
     # sed2 = fig.add_subplot(3,4,8)
@@ -288,12 +322,10 @@ if __name__ == "__main__":
     # sed2 = fig.add_subplot(3,2,4)
     # sed3 = fig.add_subplot(3,2,6)
 
-    lc_ax1 = fig.add_subplot(3,5,(1,13))
-    sed1 = fig.add_subplot(3,5,(4,5))
-    sed2 = fig.add_subplot(3,5,(9,10))
-    sed3 = fig.add_subplot(3,5,(14,15))
-
-
+    lc_ax1 = fig.add_subplot(3, 5, (1, 13))
+    sed1 = fig.add_subplot(3, 5, (4, 5))
+    sed2 = fig.add_subplot(3, 5, (9, 10))
+    sed3 = fig.add_subplot(3, 5, (14, 15))
 
     sed_xlims = [4.5e13, 2e15]
     sed_ylims = [1e-14, 2e-12]
@@ -306,7 +338,7 @@ if __name__ == "__main__":
         # ax.xaxis.tick_top()
         # ax.xaxis.set_label_position('top')
         ax.yaxis.tick_right()
-    
+
     for sed in [sed1, sed2, sed3]:
         set_scales(sed)
 
@@ -317,9 +349,9 @@ if __name__ == "__main__":
     for sed in [sed1, sed2]:
         sed.axes.xaxis.set_ticks([])
 
-    sed3.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE-2)
+    sed3.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE - 2)
 
-    sed2.yaxis.set_label_position('right')
+    sed2.yaxis.set_label_position("right")
     sed2.set_ylabel(r"$\nu$ F$_\nu$ [erg / s / cm$^2$]", fontsize=BIG_FONTSIZE)
 
     # sed1.legend(ncol=6,bbox_to_anchor=(1.2, 2.68),fancybox=True, shadow=False, fontsize=9, edgecolor="gray")
@@ -348,13 +380,11 @@ if __name__ == "__main__":
     flux = lambda lumi: lumi / (4 * np.pi * d ** 2)
     # lc_ax2 = lc_ax1.secondary_yaxis("right", functions=(lumi, flux))
     # lc_ax2.tick_params(axis="y", which="major")
-    lc_ax1.set_xlabel("Date [MJD]", fontsize=BIG_FONTSIZE-2)
+    lc_ax1.set_xlabel("Date [MJD]", fontsize=BIG_FONTSIZE - 2)
     # lc_ax1.set_ylabel(
     #     r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=BIG_FONTSIZE
     # )
-    lc_ax1.set_ylabel(
-        r"$\nu$ F$_\nu$ [erg / s / cm$^2$]", fontsize=BIG_FONTSIZE
-    )
+    lc_ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg / s / cm$^2$]", fontsize=BIG_FONTSIZE)
     # lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
     # lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg / s]", fontsize=BIG_FONTSIZE))
     lc_ax1.grid(which="both", b=True, axis="both", alpha=0.2)
@@ -368,27 +398,26 @@ if __name__ == "__main__":
     )
     bbox = dict(boxstyle="round", fc="w", ec="black")
     lc_ax1.text(
-        t_neutrino.mjd-180,
+        t_neutrino.mjd - 180,
         1.3e-13,
         "Neutrino",
         # rotation="vertical",
         # bbox=bbox,
-        fontsize=BIG_FONTSIZE-2,
+        fontsize=BIG_FONTSIZE - 2,
         color="tab:red",
     )
 
-
-    loc = [t_neutrino.mjd-302, t_neutrino.mjd+55, t_neutrino.mjd+234]
+    loc = [t_neutrino.mjd - 302, t_neutrino.mjd + 55, t_neutrino.mjd + 234]
 
     bbox = dict(boxstyle="circle", fc="#e5e5e5", ec="black")
-    for i in range(1,4):
+    for i in range(1, 4):
         lc_ax1.text(
-            loc[i-1],
+            loc[i - 1],
             1.8e-12,
             i,
             # rotation="vertical",
             bbox=bbox,
-            fontsize=BIG_FONTSIZE-1,
+            fontsize=BIG_FONTSIZE - 1,
             color="black",
         )
 
@@ -396,7 +425,9 @@ if __name__ == "__main__":
     loc_lower = (0.15, 0.009)
 
     for interval in MJD_INTERVALS:
-        lc_ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray", edgecolor="black")
+        lc_ax1.axvspan(
+            interval[0], interval[1], alpha=0.2, color="gray", edgecolor="black"
+        )
 
     bbox = dict(boxstyle="round", fc="w", ec="black")
     ax1 = create_sed(sed1, 0)
@@ -408,21 +439,24 @@ if __name__ == "__main__":
         ax.text(
             4.2e13,
             2.7e-13,
-            i+1,
+            i + 1,
             # rotation="vertical",
             bbox=bbox,
-            fontsize=BIG_FONTSIZE-1,
+            fontsize=BIG_FONTSIZE - 1,
             color="black",
         )
 
-
-
-    params = {"MIR": [6e13, 7.0e-13, "red"], "NIR": [1.8e14,7.0e-13,"orange"], "Opt": [4.8e14, 7.0e-13, "green"], "UV": [1.15e15, 7.0e-13, "violet"]}
+    params = {
+        "MIR": [6e13, 7.0e-13, "red"],
+        "NIR": [1.8e14, 7.0e-13, "orange"],
+        "Opt": [4.8e14, 7.0e-13, "green"],
+        "UV": [1.15e15, 7.0e-13, "violet"],
+    }
 
     bbox = dict(boxstyle="round", fc="w", ec="black")
     for wl_range in ["MIR", "NIR", "Opt", "UV"]:
         bbox = dict(boxstyle="round", fc="white", ec="white")
-        ax3.text(  
+        ax3.text(
             params[wl_range][0],
             params[wl_range][1],
             wl_range,
@@ -430,29 +464,29 @@ if __name__ == "__main__":
             color=params[wl_range][2],
             alpha=1,
             fontsize=SMALL_FONTSIZE,
-        )    
-    
+        )
+
     for i, sed in enumerate([sed1, sed2, sed3]):
 
         array = np.asarray([])
 
         con1 = ConnectionPatch(
             xyA=(sed_xlims[0], sed_ylims[0]),
-            coordsA=sed.transData, 
-            xyB=(MJD_INTERVALS[i][0], lc_ylim[1]), 
+            coordsA=sed.transData,
+            xyB=(MJD_INTERVALS[i][0], lc_ylim[1]),
             coordsB=lc_ax1.transData,
-            color = "gray",
-            alpha = 0.3,
+            color="gray",
+            alpha=0.3,
         )
         con2 = ConnectionPatch(
             xyA=(sed_xlims[1], sed_ylims[0]),
-            coordsA=sed.transData, 
-            xyB=(MJD_INTERVALS[i][1], lc_ylim[1]), 
+            coordsA=sed.transData,
+            xyB=(MJD_INTERVALS[i][1], lc_ylim[1]),
             coordsB=lc_ax1.transData,
-            color = "gray",
-            alpha = 0.3,
+            color="gray",
+            alpha=0.3,
         )
-    
+
         # for con in [con1, con2]:
         #     fig.add_artist(con)
 
@@ -464,7 +498,6 @@ if __name__ == "__main__":
         # coords1 = np.asarray([line1[0], line1[2], line2[0]])
         # coords2 = np.asarray([line2[0], line2[2], line1[2]])
 
-        
         # polygon1 = plt.Polygon(coords1,ec=None,fc='gray', clip_on=False, alpha=0.2)
         # polygon2 = plt.Polygon(coords2,ec=None,fc='gray', clip_on=False, alpha=0.2)
 
@@ -476,6 +509,3 @@ if __name__ == "__main__":
     outfile_pdf = os.path.join(PLOT_DIR, "lightcurve_and_sed_vertical.pdf")
     fig.savefig(outfile_png)
     fig.savefig(outfile_pdf)
-
-
-

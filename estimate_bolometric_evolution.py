@@ -38,7 +38,7 @@ FIG_WIDTH = 8
 BIG_FONTSIZE = 14
 SMALL_FONTSIZE = 8
 DPI = 400
-GOLDEN_RATIO = 1/1.618
+GOLDEN_RATIO = 1 / 1.618
 MJD_START = 58600
 MJD_END = 59416
 
@@ -62,7 +62,7 @@ infrared_radii_err = []
 optical_radii = []
 optical_radii_err = []
 
-for epoch in [0,1,2]:
+for epoch in [0, 1, 2]:
 
     infile = os.path.join(FITDIR, f"{epoch}_fitparams_all.json")
 
@@ -84,7 +84,12 @@ for epoch in [0,1,2]:
     infrared_temps.append(infrared_temp)
     infrared_temps_err.append(infrared_temp_err)
 
-    optical_luminosity, optical_luminosity_err, optical_radius, optical_radius_err = utilities.calculate_bolometric_luminosity(
+    (
+        optical_luminosity,
+        optical_luminosity_err,
+        optical_radius,
+        optical_radius_err,
+    ) = utilities.calculate_bolometric_luminosity(
         temperature=optical_temp,
         temperature_err=optical_temp_err,
         scale=optical_scale,
@@ -92,7 +97,12 @@ for epoch in [0,1,2]:
         redshift=REDSHIFT,
         cosmo="generic",
     )
-    infrared_luminosity, infrared_luminosity_err, infrared_radius, infrared_radius_err = utilities.calculate_bolometric_luminosity(
+    (
+        infrared_luminosity,
+        infrared_luminosity_err,
+        infrared_radius,
+        infrared_radius_err,
+    ) = utilities.calculate_bolometric_luminosity(
         temperature=infrared_temp,
         temperature_err=infrared_temp_err,
         scale=infrared_scale,
@@ -102,7 +112,7 @@ for epoch in [0,1,2]:
     )
 
     comb_lumi = optical_luminosity + infrared_luminosity
-    comb_lumi_err = np.sqrt(optical_luminosity_err**2 + infrared_luminosity_err**2)
+    comb_lumi_err = np.sqrt(optical_luminosity_err ** 2 + infrared_luminosity_err ** 2)
 
     total_luminosities.append(comb_lumi.value)
     total_luminosities_err.append(comb_lumi_err.value)
@@ -124,12 +134,13 @@ for epoch in [0,1,2]:
         print(f"opt. temp.: {optical_temp:.0f} +/- {optical_temp_err:.0f} K")
         print(f"infrared temp.: {infrared_temp:.0f} +/- {infrared_temp_err:.0f}K")
 
-
         print(f"opt. radius: {optical_radius:.1e} +/- {optical_radius_err:.1e}")
         print(f"infrared radius: {infrared_radius:.1e} +/- {infrared_radius_err:.1e}")
 
         print(f"opt. lumi: {optical_luminosity:.1e} +/- {optical_luminosity_err:.1e}")
-        print(f"infrared lumi: {infrared_luminosity:.1e} +/- {infrared_luminosity_err:.1e}")
+        print(
+            f"infrared lumi: {infrared_luminosity:.1e} +/- {infrared_luminosity_err:.1e}"
+        )
         print(f"comb. lumi: {comb_lumi:.3e} +/- {comb_lumi_err:.3e}")
 
         print("--------------")
@@ -155,10 +166,9 @@ df_params["total_luminosity_err"] = total_luminosities_err
 df_params.to_csv("fit_lumi_radii.csv")
 
 
-
-obsmjd_lumi = np.insert(obsmjd_lumi, [0,3], [MJD_START, MJD_END])
-total_luminosities = np.insert(total_luminosities, [0,3], [0, 0])
-infrared_luminositites = np.insert(infrared_luminosities, [0,3], [0,0])
+obsmjd_lumi = np.insert(obsmjd_lumi, [0, 3], [MJD_START, MJD_END])
+total_luminosities = np.insert(total_luminosities, [0, 3], [0, 0])
+infrared_luminositites = np.insert(infrared_luminosities, [0, 3], [0, 0])
 
 lc_infile = os.path.join(DATADIR, "full_lightcurve_final.csv")
 lc = pd.read_csv(lc_infile)
@@ -170,7 +180,7 @@ lc_g["flux"] = utilities.abmag_to_flux(lc_g["mag"])
 # # interpolation2 = UnivariateSpline(lc_g["obsmjd"], lc_g["mag"], k=5)
 # # interpolation3 = savgol_filter((lc_g["obsmjd"], lc_g["mag"]), 101, 5)
 
-fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH*GOLDEN_RATIO))
+fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * GOLDEN_RATIO))
 ax1 = plt.subplot(111)
 
 ax2 = ax1.twinx()
@@ -186,19 +196,16 @@ outfile = os.path.join(PLOTDIR, "integrated_infrared_luminosity.pdf")
 plt.savefig(outfile)
 
 
-
 integrated_bolo_lumi = np.trapz(total_luminosities, x=obsmjd_lumi) * u.erg / u.s * u.day
-integrated_infrared_bolo_lumi = np.trapz(total_luminosities, x=obsmjd_lumi) * u.erg / u.s * u.day
+integrated_infrared_bolo_lumi = (
+    np.trapz(total_luminosities, x=obsmjd_lumi) * u.erg / u.s * u.day
+)
 integrated_bolo_lumi = integrated_bolo_lumi.to(u.erg)
 
-days = 59245.5-58710.0 
-sec = days*24*60*60
+days = 59245.5 - 58710.0
+sec = days * 24 * 60 * 60
 
 approx = total_luminosities[1] * sec * 0.75
 
 print(f"Integrated bolometric luminosity: {integrated_bolo_lumi:.1e}")
 print(f"Approximate total luminosity: {approx:.1e}")
-
-
-
-
