@@ -74,7 +74,7 @@ def equation_12(T=1850, R=0.1):
 
 
 
-infile_lc = os.path.join("data", "lightcurves", "full_lightcurve_final.csv")
+infile_lc = os.path.join("data", "lightcurves", "full_lightcurve.csv")
 lc = pd.read_csv(infile_lc)
 lc_g = lc.query("telescope == 'P48' and band == 'ZTF_g'")
 lc_g = lc_g.sort_values(by=["obsmjd"])
@@ -182,7 +182,7 @@ minimizer = Minimizer(
     params=params,
     fcn_args=(x, data, data_err),
     fcn_kws={"spline_g": spline_final},
-    calc_covar=False,
+    calc_covar=True,
 )
 
 if FIT:
