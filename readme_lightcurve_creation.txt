@@ -1,6 +1,7 @@
-1) Download FP dataframe and put in data/lightcurves
-2) get alert lightcurve -- forgotten how :-/
-3) run lightcurve.py
-4) run galfit/abmag_and_error.py
-5) manually delete nan rows from infrared data
-6) run moneyplot.py
+- Download FP dataframe and put in data/lightcurves
+- get alert lightcurve -- forgotten how :-/
+- run subtract_host_from_wise.py
+- run subtract_host_from_swift.py
+- run subtract_host_from_p200.py
+- run lightcurve.py
+- run moneyplot.py

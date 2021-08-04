@@ -17,7 +17,6 @@ from modelSED.utilities import FNU
 from matplotlib.patches import ConnectionPatch, Polygon
 import matplotlib
 
-OLD_P200 = False
 
 pd.options.mode.chained_assignment = None
 
@@ -267,10 +266,7 @@ if __name__ == "__main__":
     FITDIR = os.path.join("fit", "double_blackbody")
 
 
-    if OLD_P200:
-        infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve_oldp200.csv")
-    else:
-        infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve_final.csv")
+    infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve.csv")
 
     df = pd.read_csv(infile_lightcurve)
     df_ztf_g = df.query("telescope == 'P48' and band == 'ZTF_g'")

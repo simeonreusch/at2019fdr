@@ -59,6 +59,8 @@ def plot_lightcurve(df, fluxplot=False):
     filter_wl = utilities.load_info_json("filter_wl")
     ax1 = plt.subplot(111)
 
+    ax1.set_xlim([58580, 59480])
+
     if fluxplot:
         plt.yscale("log")
         ax1.set_ylim([4e-14, 2e-12])
@@ -151,7 +153,7 @@ def plot_lightcurve(df, fluxplot=False):
     loc_upper = (0.05, 0.65)
     loc_lower = (0.09, 0.009)
 
-    ax1.legend(fontsize=SMALL_FONTSIZE +2, ncol=2, framealpha=1, loc=loc_lower)
+    ax1.legend(fontsize=SMALL_FONTSIZE , ncol=2, framealpha=1, loc=loc_lower)
 
     for interval in MJD_INTERVALS:
         ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray")
@@ -372,23 +374,19 @@ if __name__ == "__main__":
     #     "P200+H"
     # ]
 
-    # infile_swift_newcal = os.path.join(LC_DIR, "Swift_newcal.csv")
-    # infile_swift_newcal = os.path.join(LC_DIR, "Swift_newcal1.csv")
-    infile_swift_newcal = os.path.join(LC_DIR, "swift_subtracted_synthetic.csv")
-    infile_p200_swift = os.path.join(LC_DIR, "p200_swift.csv")
-    infile_p200_sextractor = os.path.join(LC_DIR, "p200_sextractor.csv")
+    infile_swift = os.path.join(LC_DIR, "swift_subtracted_synthetic.csv")
+    infile_p200 = os.path.join(LC_DIR, "p200_subtracted_synthetic.csv")
     infile_ztf_forced = os.path.join(LC_DIR, "ZTF19aatubsj_SNT_5.0.csv")
     infile_ztf_alert = os.path.join(LC_DIR, "ZTF19aatubsj_alert.csv")
     infile_swift_xrt = os.path.join(LC_DIR, "swift_xrt_ulims.csv")
     infile_fermi = os.path.join(LC_DIR, "fermi_ulims.csv")
     infile_vla = os.path.join(LC_DIR, "vla.csv")
-    infile_wise = os.path.join(LC_DIR, "wise_subtracted.csv")
+    infile_wise = os.path.join(LC_DIR, "wise_subtracted_baseline.csv")
 
     outfile_lightcurve = os.path.join(LC_DIR, "full_lightcurve.csv")
 
-    df_swift_newcal = pd.read_csv(infile_swift_newcal)
-    df_p200_swift = pd.read_csv(infile_p200_swift)
-    df_p200_sextractor = pd.read_csv(infile_p200_sextractor)
+    df_swift = pd.read_csv(infile_swift)
+    df_p200 = pd.read_csv(infile_p200)
     df_ztf_forced = pd.read_csv(infile_ztf_forced)
     df_ztf_alert = pd.read_csv(infile_ztf_alert)
     df_swift_xrt = pd.read_csv(infile_swift_xrt)
@@ -396,9 +394,6 @@ if __name__ == "__main__":
     df_vla = pd.read_csv(infile_vla)
     df_wise = pd.read_csv(infile_wise)
 
-    # df_wise = convert_mJy_to_abmag(df_wise)
-
-    df_p200 = df_p200_swift.query("telescope == 'P200'")
 
     df_ztf_forced = df_ztf_forced[["obsmjd", "mag", "mag_err", "filter"]]
     df_ztf_forced.rename(columns={"filter": "band"}, inplace=True)
@@ -419,14 +414,16 @@ if __name__ == "__main__":
     df = pd.concat(
         [
             df_p200,
-            df_p200_sextractor,
-            df_swift_newcal,
+            df_swift,
             df_ztf_forced,
             df_ztf_alert,
             df_wise,
         ],
         ignore_index=True,
     )
+
+    df.reset_index(inplace=True, drop=True)
+    df.drop(columns=["Unnamed: 0"], inplace=True)
 
     cmap = utilities.load_info_json("cmap")
     filterlabel = utilities.load_info_json("filterlabel")
@@ -440,6 +437,5 @@ if __name__ == "__main__":
         plot_sed(interval, title=titles[i])
 
     # Save lightcurve for further use
-    df.reset_index(inplace=True, drop=True)
-    # df.drop(columns=["Unnamed: 0"], inplace=True)
+
     df.to_csv(outfile_lightcurve)

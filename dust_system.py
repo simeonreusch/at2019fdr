@@ -25,7 +25,7 @@ mpl.rcParams.update(nice_fonts)
 mpl.rcParams["text.usetex"] = True
 mpl.rcParams["text.latex.preamble"] = [r"\usepackage{amsmath}"]  # for \text command
 
-FIT = False
+FIT = True
 PLOT = True
 
 DPI = 400
@@ -134,7 +134,6 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
 
     _spline_g = kwargs["spline_g"]
 
-
     _boxfunc = []
     for i, mjd in enumerate(mjds):
         if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2*delay)):
@@ -145,10 +144,6 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
     _convolution = convolve(_spline_g, _boxfunc, mode="same") / sum(_boxfunc)*amplitude
 
     spline_conv = splrep(mjds, _convolution, s=1e-30)
-
-    # spline_eval_conv = splev(mjds, spline_conv)
-    # print(spline_eval_conv)
-    # quit()
 
     residuals = []
     for i, flux in enumerate(data):
@@ -166,26 +161,24 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
 
 
     residuals = np.array(residuals)
-    print(residuals)
-    print(np.mean(abs(residuals)))
-
+    
+    chisq = np.sum(residuals**2)
+    
+    print(chisq)
 
     return residuals
 
 
-minimizer_fcn = minimizer_function
-
 params = Parameters()
-params.add("delay", min=160, max=180)#, value=140)#, min=50, max=350)
-params.add("amplitude", min=1.0, max=1.4, value=1.0)#, min=0.5, max=2.)
+params.add("delay", min=140, max=220, value=180)#, min=50, max=350)
+params.add("amplitude", min=0.8, max=1.8, value=1.0)#, min=0.5, max=2.)
 
 x = obsmjd_w1
 data = nu_fnu_w1
 data_err = nu_fnu_err_w1
 
-
 minimizer = Minimizer(
-    userfcn=minimizer_fcn,
+    userfcn=minimizer_function,
     params=params,
     fcn_args=(x, data, data_err),
     fcn_kws={"spline_g": spline_final},
@@ -193,8 +186,11 @@ minimizer = Minimizer(
 )
 
 if FIT:
-    FITMETHOD = "nelder"
-    res = minimizer.minimize(method=FITMETHOD)#, Ns=30, workers=1)
+    FITMETHOD = "brute"
+    if FITMETHOD == "brute":
+        res = minimizer.minimize(method=FITMETHOD, Ns=50, workers=1)
+    else:
+        res = minimizer.minimize(method=FITMETHOD)
     print(report_fit(res))
 
     # print(report_fit(res.params, min_correl=0.01))
@@ -203,10 +199,10 @@ if FIT:
     amplitude = res.params["amplitude"].value
 
 else:
-    delay = 171.08
-    amplitude = 1.194
-    delay = 183
-    amplitude = 1.3
+    delay = 172.65306
+    amplitude = 1.18775510
+    # delay = 183
+    # amplitude = 1.3
 
 dust_distance_model = (delay * u.day * const.c).to(u.cm)
 
@@ -222,11 +218,6 @@ if PLOT:
     # We calculate the convolution
     convolution = convolve(spline_final, boxfunc, mode="same") / sum(boxfunc)*amplitude
 
-    # spline_conv = splrep(mjds, convolution, s=1e-30)
-
-    # spline_eval_conv = splev(mjds, spline_conv)
-
-
     # And now we plot
 
 
@@ -240,7 +231,7 @@ if PLOT:
     ax.set_ylabel(r"$\nu F_{\nu}$ [erg/s/cm$^2$]")
     ax2.set_ylabel("Transfer function")
     ax.errorbar(obsmjd_g-MJD_OPT_PEAK, nu_fnu_g, nu_fnu_err_g, color="tab:green", alpha=0.5, label="ZTF g-band", fmt=".")
-    ax.errorbar(obsmjd_w1-MJD_OPT_PEAK, nu_fnu_w1, nu_fnu_err_w1, color="tab:blue", label="WISE W1", fmt=".")
+    ax.errorbar(obsmjd_w1-MJD_OPT_PEAK, nu_fnu_w1, nu_fnu_err_w1, color="tab:blue", label="WISE W1", fmt=".", markersize=1)
 
     # ax.errorbar(obsmjd_w2-MJD_OPT_PEAK, nu_fnu_w2, nu_fnu_err_w2, color="tab:red", label="WISE W2", fmt=".")
 
@@ -276,57 +267,75 @@ print(f"inferred from Sjoert's model: {dust_distance_model:.2e}")
 dist_sjoertmethod = delay.to(u.s) * const.c
 R_Tywin_sjoertmethod = dist_sjoertmethod.to(u.pc).value
 
-T_Tywin = 1750
+T_Tywin = 1850
 
-L_abs = equation_12(T=T_Tywin, R=R_Tywin_sjoertmethod)
+L_abs_paper = equation_12(T=T_Tywin, R=R_Tywin_sjoertmethod)
+log10L_abs_paper = np.log10(L_abs_paper.value)
+L_abs_frombb = 1.02e45 * u.erg / u.s
+log10_L_abs_frombb = np.log10(L_abs_frombb.value)
 
-log10L_abs = np.log10(L_abs.value)
+L_dust_frombb = 4.93e44 * u.erg / u.s
+
 print("\n")
 print("----- ENERGETICS (ALL FROM SJOERT'S MODEL) -------")
 print(f"R used for following calculations: {R_Tywin_sjoertmethod:.3f} pc")
-print(f"T used for following calculations: {T_Tywin} K (from BB fit)")
+print(f"T used for following calculations: {T_Tywin} K")
 print("\n")
-print(f"L_abs (paper eq. 12) = {L_abs:.2e}")
-print(f"log L_abs = {log10L_abs:.2f}")
+print(f"L_abs (paper eq. 12) = {L_abs_paper:.2e}")
+# print(f"--> log L_abs = {log10L_abs_paper:.2f}")
+print(f"L_abs (peak opt/UV BB luminosity) = {L_abs_frombb:.2e}")
+print(f"L_dust (peak IR BB luminosity) = {L_dust_frombb:.2e}")
+print("--------------------")
 
 # Now we integrate this over the optical lightcurve
-L_abs = L_abs.value
 
 time = spline_g[0] - min(spline_g[0])
 time = [(t * u.day).to(u.s).value for t in time]
 
 max_of_g = max(spline_g[1])
 
-d = cosmo.luminosity_distance(REDSHIFT)
-d = d.to(u.cm).value
-lumi = max_of_g * 4 * np.pi * d ** 2
+new_spline_paper = spline_g[1] / max_of_g * L_abs_paper.value
+E_abs_paper = np.trapz(y=new_spline_paper, x=time) * u.erg
+log10E_abs_paper = np.log10(E_abs_paper.value)
 
-new_spline = spline_g[1] / max_of_g * L_abs
+new_spline_frombb = spline_g[1] / max_of_g * L_abs_frombb.value
+E_abs_frombb = np.trapz(y=new_spline_frombb, x=time) * u.erg
+log10E_abs_frombb = np.log10(E_abs_frombb.value)
 
-E_abs = np.trapz(y=new_spline, x=time)
-
-E_abs = E_abs * u.erg
-log10E_abs = np.log10(E_abs.value)
-
-print(f"E_abs (from optical lightcurve normalized to L_abs) = {E_abs:.2e}")
-print(f"log E_abs = {log10E_abs:.2f}")
-
+print(f"E_abs (from paper eq. 12) = {E_abs_paper:.2e}")
+# print(f"log E_abs = {log10E_abs:.2f}")
+print(f"E_abs (from peak BB luminosity) = {E_abs_frombb:.2e}")
+print("--------------------")
 
 time = mjds - min(mjds)
 time = [(t * u.day).to(u.s).value for t in time]
 
-spline_ir = spline_final / max_of_g * L_abs
+d = cosmo.luminosity_distance(REDSHIFT)
+d = d.to(u.cm).value
+L_abs_mod = max_of_g * 4 * np.pi * d ** 2
 
-E_dust = np.trapz(y=spline_ir, x=time)
+
+
+
+spline_dust = spline_final / max(spline_final) * L_dust_frombb.value
+ 
+
+
+# spline_ir = spline_final / max_of_g * L_abs_mod
+
+E_dust = np.trapz(y=spline_dust, x=time)
 E_dust = E_dust * u.erg
-
 log10E_dust = np.log10(E_dust.value)
-print(f"E_dust (from fitted IR lightcurve normalized to L_abs) = {E_dust:.2e}")
-print(f"log E_dust = {log10E_dust:.2f}")
 
-f = E_dust/E_abs
+print(f"E_dust (from peak IR BB lumi) = {E_dust:.2e}")
+print("--------------------")
+# print(f"log E_dust = {log10E_dust:.2f}")
 
-print(f"Covering factor (E_dust/E_abs) = {f:.2f}")
+f_paper = E_dust/E_abs_paper
+f_frombb = E_dust / E_abs_frombb
+
+print(f"Covering factor (from paper eq. 12) = {f_paper:.2f}")
+print(f"Covering factor (from BB lumis) = {f_frombb:.2f}")
 
 
 

@@ -2,205 +2,144 @@
 # Author: Simeon Reusch (simeon.reusch@desy.de)
 # License: BSD-3-Clause
 
-import os, json
+import os, time
+import astropy
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-import matplotlib
+import matplotlib.gridspec as gridspec
+from astropy.utils.console import ProgressBar
+#from astropy.time import Time
+#from astropy.coordinates import SkyCoord
+from astropy.nddata import Cutout2D
 from astropy import units as u
-from astropy.cosmology import Planck15 as cosmo
-
+from astropy.io import fits
+from astropy.io.fits import getdata
+from astropy.utils.console import ProgressBar
+from matplotlib.colors import LogNorm, Normalize
+import subprocess
+from os import listdir
+from os.path import isfile, join
+from pathlib import Path
 from modelSED import utilities, sncosmo_spectral_v13
 
-XRTCOLUMN = "flux0310_pi_-2"
-nice_fonts = {
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": "Times New Roman",
-}
-matplotlib.rcParams.update(nice_fonts)
 
+HOST_MODEL_DIR = os.path.join("/", "Users", "simeon", "tywin", "data", "host_model")
+LIGHTCURVE_DIR = os.path.join("/", "Users", "simeon", "tywin", "data", "lightcurves")
+infile_from_epoch_1 = os.path.join(LIGHTCURVE_DIR, "galfit_result_twocomp_fromepoch1.csv")
+infile_from_epoch_4 = os.path.join(LIGHTCURVE_DIR, "galfit_result_twocomp_fromepoch4.csv")
 
-def vega_to_ab(band, mag):
-    diff = {"P200+J": 0.91, "P200+H": 1.39, "P200+Ks": 1.85}
-    print(mag)
-    print(mag + diff[band])
-    return mag + diff[band]
+df = pd.DataFrame()
+df_1 = pd.read_csv(infile_from_epoch_1)
+df_4 = pd.read_csv(infile_from_epoch_4)
+df["obsmjd"] = df_1["obsmjd"]
 
+for band in ["H", "J", "Ks"]:
+    for obj in ["host", "psf"]:
+        df_1[f"{band}_abmag_{obj}"] = utilities.p200_vega_to_ab(vegamag=df_1[f"{band}_vegamag_{obj}"].values, band=f"P200+{band}")
+        df_4[f"{band}_abmag_{obj}"] = utilities.p200_vega_to_ab(vegamag=df_4[f"{band}_vegamag_{obj}"].values, band=f"P200+{band}")
+        df_1[f"{band}_flux_{obj}"] = utilities.abmag_to_flux(df_1[f"{band}_abmag_{obj}"].values, magzp=0)
+        df_4[f"{band}_flux_{obj}"] = utilities.abmag_to_flux(df_4[f"{band}_abmag_{obj}"].values, magzp=0)
+    df_1[f"{band}_flux_comb"] = df_1[f"{band}_flux_host"] + df_1[f"{band}_flux_psf"]
+    df_4[f"{band}_flux_comb"] = df_4[f"{band}_flux_host"] + df_1[f"{band}_flux_psf"]
+    df_1[f"{band}_abmag_comb"] = utilities.flux_to_abmag(df_1[f"{band}_flux_comb"].values, flux_nu_zp=0)
+    df_4[f"{band}_abmag_comb"] = utilities.flux_to_abmag(df_4[f"{band}_flux_comb"].values, flux_nu_zp=0)
 
-DATE = "2020_07_01"
-# DATE = "2020_09_29"
-REDSHIFT = 0.267
-FONTSIZE = 14
-FONTSIZE_LEGEND = 14
-ANNOTATION_FONTSIZE = 14
-FONTSIZE_TICKMARKS = 12
-DPI = 400
-PLOTDIR = "plots"
-DATA_DIR = os.path.join("data", f"P200_NIR_observations_{DATE}")
+    df[f"{band}_abmag_1"] = df_1[f"{band}_abmag_comb"]
+    df[f"{band}_abmag_4"] = df_4[f"{band}_abmag_comb"]
+    df[f"{band}_flux_1"] = df_1[f"{band}_flux_comb"]
+    df[f"{band}_flux_4"] = df_4[f"{band}_flux_comb"]
 
+    col1 = df.loc[: , f"{band}_abmag_1":f"{band}_abmag_4"]
+    col2 = df.loc[: , f"{band}_flux_1":f"{band}_flux_4"]
+    df[f"{band}_abmag_mean"] = col1.mean(axis=1)
+    df[f"{band}_flux_mean"] = col2.mean(axis=1)
+    df[f"{band}_abmag_err"] = np.abs(df[f"{band}_abmag_1"] - df[f"{band}_abmag_4"])
+    df[f"{band}_flux_err"] = utilities.abmag_err_to_flux_err(
+            df[f"{band}_abmag_mean"], df[f"{band}_abmag_err"], magzp=0, magzp_err=0
+        )
 
-P200_OBS_FILE = os.path.join(DATA_DIR, "unsubtracted_magnitudes.json")
+    infile_host_spectrum = os.path.join(HOST_MODEL_DIR, "Tywin_parasfh_wduste_spectrum_NEW.dat")
 
-infile = os.path.join("data", "host_model", "Tywin_parasfh_spectrum_with_WISE.dat")
-
-host_spectrum = pd.read_table(
-    infile, names=["wl", "flux", "abmag"], sep="\s+", comment="#"
-)
-
-with open(P200_OBS_FILE, "r") as read_file:
-    p200_observed = json.load(read_file)
-
-host_spectrum["mag"] = utilities.flux_to_abmag(flux_nu=host_spectrum.flux, flux_nu_zp=0)
-
-
-filter_wl = utilities.load_info_json("filter_wl")
-cmap = utilities.load_info_json("cmap")
-filterlabel = utilities.load_info_json("filterlabel")
-
-p200_bands = ["P200+J", "P200+H", "P200+Ks"]
-
-all_bands = ["P200+J", "P200+H", "P200+Ks", "P48+ZTF_g", "P48+ZTF_r", "P48+ZTF_i"]
-
-
-# Now we get magnitudes using bandpasses
-# First we need to construct a proper spectrum
-spectrum = sncosmo_spectral_v13.Spectrum(
-    wave=host_spectrum.wl.values,
-    flux=host_spectrum.flux.values * 3.631e-20,
-    unit=utilities.FNU,
-)
-
-p200_host = {}
-all_host = {}
-
-for band in all_bands:
-    abmag = utilities.magnitude_in_band(band=band, spectrum=spectrum)
-    all_host.update({band: abmag})
-
-for band in p200_bands:
-    abmag = utilities.magnitude_in_band(band=band, spectrum=spectrum)
-    p200_host.update({band: abmag})
-
-# Now we calculate the fluxes for observation and host-model, subtract them
-# and calculate the subtracted magnitude
-p200_subtracted = {}
-
-for band in p200_host:
-    fluxmaggie_host = utilities.abmag_to_flux(p200_host[band], magzp=0)
-    fluxmaggie_observed = utilities.abmag_to_flux(p200_observed[band][0], magzp=0)
-    fluxmaggie_observed = utilities.abmag_to_flux(
-        vega_to_ab(band, p200_observed[band][0]), magzp=0
-    )
-    fluxmaggie_diff = fluxmaggie_observed - fluxmaggie_host
-    print(f"{band} host mag: {utilities.flux_to_abmag(fluxmaggie_host, 0)}")
-    print(f"{band} obs mag: {utilities.flux_to_abmag(fluxmaggie_observed, 0)}")
-    abmag_after_subtraction = utilities.flux_to_abmag(fluxmaggie_diff, 0)
-    p200_subtracted.update({band: abmag_after_subtraction})
-
-bandpassfiles = utilities.load_info_json("bandpassfiles")
-
-
-# Now we plot this
-fig, ax1 = plt.subplots(1, 1, figsize=[6, 6 / 1.414], dpi=DPI)
-# fig.suptitle("AT2019fdr host model spectrum, NIR observations")
-ax1.plot(
-    utilities.lambda_to_nu(host_spectrum.wl),
-    utilities.abmag_to_flux(host_spectrum.mag),
-    label="modeled Host spectrum",
-    color="tab:blue",
-)
-
-# ax1.invert_yaxis()
-# ax1.set_xlim(1.4e3, 2e5)
-# ax1.set_ylim(27.5, 14)
-ax1.set_xlim(1.17e14, 3e14)
-ax1.set_ylim(1e-27, 4e-26)
-ax1.set_xlabel("Frequency [Hz]", fontsize=FONTSIZE)
-ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=FONTSIZE)
-
-for band in p200_bands:
-    wl = filter_wl[band]
-    abmag = p200_observed[band][0]
-    abmag_err = p200_observed[band][1]
-    ax1.errorbar(
-        x=utilities.lambda_to_nu(wl),
-        y=utilities.abmag_to_flux(abmag),
-        yerr=utilities.abmag_err_to_flux_err(abmag, abmag_err),
-        color=cmap[band],
-        # linewidths=1,
-        marker="s",
-        label=f"{filterlabel[band]} observed",
-        # edgecolors="black",
-        # size=42,
+    host_spectrum = pd.read_table(
+        infile_host_spectrum,
+        names=["wl", "flux", "abmag"],
+        sep="\s+",
+        comment="#",
     )
 
-    wl = filter_wl[band]
-    abmag_sub = p200_subtracted[band]
-    abmag_sub_err = p200_observed[band][1]
-    ax1.errorbar(
-        x=utilities.lambda_to_nu(wl),
-        y=utilities.abmag_to_flux(abmag_sub),
-        yerr=utilities.abmag_err_to_flux_err(abmag_sub, abmag_sub_err),
-        color=cmap[band],
-        label=f"{filterlabel[band]} subtracted",
-        marker="o",
-        # linewidths=1,
-        # edgecolors="black",
-        # size=42,
+    host_spectrum["mag"] = utilities.flux_to_abmag(
+        flux_nu=host_spectrum.flux,
+        flux_nu_zp=0,
     )
 
-    bbox = dict(boxstyle="round", fc="1", color=cmap[band])
-
-    ax1.annotate(
-        filterlabel[band],
-        (1.04 * utilities.lambda_to_nu(wl), utilities.abmag_to_flux(abmag)),
-        fontsize=ANNOTATION_FONTSIZE,
-        bbox=bbox,
-        color=cmap[band],
+    spectrum = sncosmo_spectral_v13.Spectrum(
+        wave=host_spectrum.wl.values,
+        flux=host_spectrum.flux.values * 3.631e-20,
+        unit=utilities.FNU,
+    )
+    abmag_host_synthetic = utilities.magnitude_in_band(
+            band=f"P200+{band}",
+            spectrum=spectrum
+    )
+    flux_host_synthetic = utilities.abmag_to_flux(
+        abmag_host_synthetic,
+        magzp=0,
     )
 
-bbox = dict(boxstyle="round", fc="1", color="tab:blue")
-ax1.text(
-    0.08,
-    0.18,
-    "Synthetic host spectrum",
-    transform=ax1.transAxes,
-    fontsize=ANNOTATION_FONTSIZE,
-    bbox=bbox,
-    color="tab:blue",
-)
+    df[f"{band}_abmag_synthetic"] = abmag_host_synthetic
+    df[f"{band}_flux_synthetic"] = flux_host_synthetic
+    df[f"{band}_flux_synthetic_err"] = flux_host_synthetic * 0.05
 
-plt.xscale("log")
-plt.yscale("log")
+    df[f"{band}_flux_transient_err"] = df[f"{band}_flux_err"] + df[f"{band}_flux_synthetic_err"]
 
-d = cosmo.luminosity_distance(REDSHIFT)
-d = d.to(u.cm).value
-lumi = lambda flux: flux * 4 * np.pi * d ** 2
-flux = lambda lumi: lumi / (4 * np.pi * d ** 2)
-ax2 = ax1.secondary_yaxis("right", functions=(lumi, flux))
-ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=FONTSIZE)
-ax3 = ax1.secondary_xaxis("top", functions=(utilities.nu_to_ev, utilities.ev_to_nu))
-ax3.set_xlabel(r"Energy [eV]", fontsize=FONTSIZE)
-ax1.tick_params(axis="both", which="major", labelsize=FONTSIZE_TICKMARKS)
-ax2.tick_params(axis="y", which="major", labelsize=FONTSIZE_TICKMARKS)
+    df[f"{band}_flux_transient"] = df[f"{band}_flux_mean"] - flux_host_synthetic
+    df[f"{band}_abmag_transient"] = utilities.flux_to_abmag(
+        flux_nu=df[f"{band}_flux_transient"],
+        flux_nu_zp=0,
+    )
 
-if not os.path.exists(PLOTDIR):
-    os.makedirs(PLOTDIR)
+    df[f"{band}_abmag_err_transient"] = utilities.flux_err_to_abmag_err(
+        df[f"{band}_flux_transient"],
+        df[f"{band}_flux_transient_err"]
+    )
 
-outfile = os.path.join(PLOTDIR, "tywin_host_spectrum.png")
-plt.grid(which="both", alpha=0.15)
-plt.tight_layout()
-fig.savefig(outfile)
 
-for band in p200_subtracted:
-    p200_subtracted.update({band: [p200_subtracted[band], p200_observed[band][1]]})
+abmags = []
+abmag_errs = []
+bands = []
+obsmjds = []
 
-OUTFILE = os.path.join(DATA_DIR, "subtracted_magnitudes.json")
-with open(OUTFILE, "w") as outfile:
-    json.dump(p200_subtracted, outfile)
+for band in ["J", "H", "Ks"]:
+    for i, obsmjd in enumerate(df.obsmjd.values):
+        abmag = df.query(f"obsmjd == {obsmjd}")[f"{band}_abmag_transient"].values[0]
+        abmag_err = df.query(f"obsmjd == {obsmjd}")[f"{band}_abmag_err_transient"].values[0]
+        abmags.append(abmag)
+        abmag_errs.append(abmag_err)
+        bands.append(band)
+        obsmjds.append(obsmjd)
 
-print(f"Subtracted magnitudes are:")
 
-for key in p200_subtracted:
-    print(f"{key}: {p200_subtracted[key][0]:.5f} +/- {p200_subtracted[key][1]:.5f}")
+output_df = pd.DataFrame(columns=["band", "telescope", "obsmjd", "mag", "mag_err", "alert"])
+
+output_df["band"] = bands
+output_df["telescope"] = "P200"
+output_df["obsmjd"] = obsmjds
+output_df["mag"] = abmags
+output_df["mag_err"] = abmag_errs
+output_df["alert"] = True
+
+# lightcurve_infile = os.path.join(LIGHTCURVE_DIR, "full_lightcurve.csv")
+# lc = pd.read_csv(lightcurve_infile)
+# lc.drop(columns=["Unnamed: 0.1"], inplace=True)
+
+# lc_comb = pd.concat([output_df, lc]).reset_index(drop=True)
+# lc_comb.drop(columns=["Unnamed: 0"], inplace=True)
+outfile = os.path.join(LIGHTCURVE_DIR, "p200_subtracted_synthetic.csv")
+
+output_df = output_df.dropna()
+output_df.to_csv(outfile)
+
+
+
+

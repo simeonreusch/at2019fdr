@@ -49,10 +49,22 @@ newkeys = {key: key.strip(" ") for key in keys}
 df_wise = df_wise.rename(columns=newkeys)
 wise_prepeak = df_wise.query("mjd <= 58600")
 
-wise_mean_absmags = {}
+
+wise_median_vegamags = {}
+wise_median_vegamag_errs = {}
+
 for band in wise_prepeak.band.unique():
     df_temp = wise_prepeak.query(f"band == '{band}'")
-    wise_mean_absmags.update({band: df_temp.mag_vega.median()})
+    median_vegamag = df_temp.mag_vega.median()
+    sigma=np.std(df_temp.mag_vega.values)
+    n=len(df_temp.mag_vega.values)
+    median_vegamag_err = 1.253 * sigma / np.sqrt(n)
+
+    wise_median_vegamags.update({band: median_vegamag})
+    wise_median_vegamag_errs.update({band: median_vegamag_err})
+
+
+
 
 abmags_transient = []
 abmag_errs_transient = []
@@ -66,18 +78,30 @@ for i, x in wise_transient.iterrows():
 
     abmag_observed = utilities.wise_vega_to_ab(vegamag_observed, band)
     fluxerr_obs = utilities.abmag_err_to_flux_err(
-        abmag_observed, vegamag_err_observed, magzp=None, magzp_err=None
+        abmag_observed,
+        vegamag_err_observed,
+        magzp=None,
+        magzp_err=None,
     )
 
-    vegamag_host = wise_mean_absmags[band]
+    vegamag_host = wise_median_vegamags[band]
+    vegamag_err_host = wise_median_vegamag_errs[band]
     abmag_host = utilities.wise_vega_to_ab(vegamag_host, band)
 
     flux_host = utilities.abmag_to_flux(abmag_host)
+    flux_err_host = utilities.abmag_err_to_flux_err(
+        abmag_host, 
+        vegamag_err_host,
+        magzp=None,
+        magzp_err=None
+    )
+
     flux_observed = utilities.abmag_to_flux(abmag_observed)
     flux_diff = flux_observed - flux_host
+    flux_err_diff = fluxerr_obs + flux_err_host
 
     abmag_transient = utilities.flux_to_abmag(flux_diff)
-    abmag_err_transient = utilities.flux_err_to_abmag_err(flux_diff, fluxerr_obs)
+    abmag_err_transient = utilities.flux_err_to_abmag_err(flux_diff, flux_err_diff)
 
     abmags_transient.append(abmag_transient)
     abmag_errs_transient.append(abmag_err_transient)
@@ -92,5 +116,5 @@ wise_transient["mag"] = abmags_transient
 wise_transient["mag_err"] = abmag_errs_transient
 wise_transient["alert"] = True
 
-outfile = os.path.join(DATA_DIR, "wise_subtracted.csv")
+outfile = os.path.join(DATA_DIR, "wise_subtracted_baseline.csv")
 wise_transient.to_csv(outfile)

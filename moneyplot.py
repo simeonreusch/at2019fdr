@@ -17,8 +17,6 @@ from modelSED.utilities import FNU
 from matplotlib.patches import ConnectionPatch, Polygon
 import matplotlib
 
-OLD_P200 = False
-
 pd.options.mode.chained_assignment = None
 
 cmap = utilities.load_info_json("cmap")
@@ -250,11 +248,7 @@ if __name__ == "__main__":
     LC_DIR = os.path.join(DATA_DIR, "lightcurves")
     FITDIR = os.path.join("fit", "double_blackbody")
 
-
-    if OLD_P200:
-        infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve_oldp200.csv")
-    else:
-        infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve_final.csv")
+    infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve.csv")
 
     df = pd.read_csv(infile_lightcurve)
     df_ztf_g = df.query("telescope == 'P48' and band == 'ZTF_g'")
@@ -272,7 +266,7 @@ if __name__ == "__main__":
     sed3 = fig.add_subplot(2,3,3)
 
     sed_xlims = [5e13, 2e15]
-    sed_ylims = [5e-14, 2e-12]
+    sed_ylims = [5e-15, 2e-12]
 
     def set_scales(ax):
         ax.set_xscale("log")
