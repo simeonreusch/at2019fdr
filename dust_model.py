@@ -2,7 +2,7 @@
 # Author: Simeon Reusch (simeon.reusch@desy.de)
 # License: BSD-3-Clause
 
-import os
+import os, json
 from astropy import units as u
 from astropy import constants as const
 import pandas as pd
@@ -26,8 +26,8 @@ mpl.rcParams.update(nice_fonts)
 mpl.rcParams["text.usetex"] = True
 mpl.rcParams["text.latex.preamble"] = [r"\usepackage{amsmath}"]  # for \text command
 
-FIT = True
-PLOT = True
+FIT = False
+PLOT = False
 
 DPI = 400
 FIG_WIDTH = 6
@@ -38,6 +38,11 @@ REDSHIFT = 0.2666
 
 MJD_OPT_PEAK = 58709.84
 MJD_IR_PEAK = 59074.01
+
+FITDIR = os.path.join("fit", "dust_model")
+
+if not os.path.exists(FITDIR):
+    os.makedirs(FITDIR)
 
 
 infile_fitdf = "fit_lumi_radii.csv"
@@ -207,19 +212,25 @@ else:
 
 dust_distance_model = (delay * u.day * const.c).to(u.cm)
 
+
+boxfunc = []
+for i, mjd in enumerate(mjds):
+    if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * delay)):
+        boxfunc.append(0)
+    else:
+        boxfunc.append(1)
+
+# We calculate the convolution
+convolution = convolve(spline_final, boxfunc, mode="same") / sum(boxfunc) * amplitude
+
+convolution_data = {"mjds": list(mjds + delay), "convolution": list(convolution)}
+convolution_outfile = os.path.join(FITDIR, "dust_model.json")
+
+with open(convolution_outfile, "w") as f:
+    json.dump(convolution_data, f)
+
+
 if PLOT:
-
-    boxfunc = []
-    for i, mjd in enumerate(mjds):
-        if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * delay)):
-            boxfunc.append(0)
-        else:
-            boxfunc.append(1)
-
-    # We calculate the convolution
-    convolution = (
-        convolve(spline_final, boxfunc, mode="same") / sum(boxfunc) * amplitude
-    )
 
     # And now we plot
 
@@ -328,7 +339,7 @@ log10E_abs_frombb = np.log10(E_abs_frombb.value)
 
 print(f"E_abs (from paper eq. 12) = {E_abs_paper:.2e}")
 # print(f"log E_abs = {log10E_abs:.2f}")
-print(f"E_abs (from peak BB luminosity) = {E_abs_frombb:.2e}")
+print(f"E_abs (from peak opt/UV BB luminosity) = {E_abs_frombb:.2e}")
 print("--------------------")
 
 time = mjds - min(mjds)
