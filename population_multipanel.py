@@ -92,8 +92,8 @@ def create_subplot(ax, max_distnr):
             "peakmag": tywin_peakmag,
             "lumi": tywin_lumi,
             "distnr": 0.19,
-            # "loc": (122, -23.0),
-            "loc": (110, 2.3e-5),
+            "loc": (160, 17.9),
+            # "loc": (110, 2.3e-5),
             "label": "AT2019fdr",
         },
         "bran": {
@@ -103,9 +103,19 @@ def create_subplot(ax, max_distnr):
             "peakmag": bran_peakmag,
             "lumi": bran_lumi,
             "distnr": 0.25,
-            # "loc": (100, -18.0),
-            "loc": (86, 0.97e-5),
+            "loc": (50, 17.6),
+            # "loc": (86, 0.97e-5),
             "label": "AT2019dsg",
+        },
+        "lancel": {
+            "duration": 258,
+            "peakabsmag": -19.215971997908706,
+            "peakmag": 16.7645092010498,
+            "lumi": bran_lumi,
+            "distnr": 0.2851865142583845,
+            "loc": (140, 16.57),
+            # "loc": (86, 0.97e-5),
+            "label": "AT2019aalc",
         },
         # "asassn": {
         #     "duration": 60,
@@ -152,14 +162,14 @@ def create_subplot(ax, max_distnr):
 
     ZTF_IDS_BARATHEONS = ["ZTF19aabbnzo"]
 
-    # df_tdes_baratheons = pd.read_csv(infile_tdes_baratheons)
-    # durations_tdes_baratheons = []
-    # peak_absmag_tdes_baratheons = []
-    # peak_mag_tdes_baratheons = []
-    # peakfilter_tdes_baratheons = []
-    # distnr_tdes_baratheons = []
+    df_tdes_baratheons = pd.read_csv(infile_tdes_baratheons)
+    durations_tdes_baratheons = []
+    peak_absmag_tdes_baratheons = []
+    peak_mag_tdes_baratheons = []
+    peakfilter_tdes_baratheons = []
+    distnr_tdes_baratheons = []
 
-    # # print(df_baratheons.name.values)
+    # print(df_baratheons.name.values)
     # for ztfid in df_tdes_baratheons.name.values:
 
     #     ampel = connectors.AmpelInfo([ztfid], nprocess=16, logger=None)
@@ -225,15 +235,14 @@ def create_subplot(ax, max_distnr):
     # for entry in df_tdes_baratheons["peakfilter"].values:
     #     freq.append(ZTF_HZ[entry])
 
-    # # df.apply (lambda filterletter: get_freq(row), axis=0)
-
-    # # quit()
     # lumi = 0.75 * utilities.abmag_to_flux(df_tdes_baratheons["peakmag"].values) * df_tdes_baratheons["duration"].values * 86400 * freq
 
     # df_tdes_baratheons["lumi"] = lumi
 
     # outfile = os.path.join("data", "tdes_and_baratheons.csv")
     # df_tdes_baratheons.sort_values(by="lumi").to_csv(outfile)
+
+    # quit()
 
     infile = os.path.join(DATADIR, "tdes_and_baratheons.csv")
     df_tdes_baratheons = pd.read_csv(infile)
@@ -340,10 +349,13 @@ def create_subplot(ax, max_distnr):
         f"type == 'Baratheon' and distnr < {max_distnr}"
     )
 
-    if max_distnr > 0.19:
-        label_baratheons = f"TDE-\nlike ({len(df_baratheons)+1})"
+    if max_distnr > 0.2:
+        label_baratheons = f"TDE-\nlike ({len(df_baratheons)+2})"
+        label_tdes = f"TDE ({len(df_tde)+1})"
     else:
-        label_baratheons = f"TDE-\nlike ({len(df_baratheons)})"
+        label_baratheons = f"TDE-\nlike ({len(df_baratheons)+1})"
+        label_tdes = f"TDE ({len(df_tde)})"
+
     plotparams = {
         "Baratheons": {
             "df": df_baratheons,
@@ -358,7 +370,7 @@ def create_subplot(ax, max_distnr):
             "df": df_tde,
             "c": "tab:orange",
             "m": "D",
-            "l": f"TDE ({len(df_tde)})",
+            "l": label_tdes,
             "s": 14,
             "a": 1,
             "zorder": 6,
@@ -447,7 +459,7 @@ def create_subplot(ax, max_distnr):
                 SPECIAL_OBJECTS[obj]["label"],
                 SPECIAL_OBJECTS[obj]["loc"],
                 color="black",
-                fontsize=ANNOTATION_FONTSIZE,
+                fontsize=ANNOTATION_FONTSIZE - 3,
             )
     # plt.annotate(
     #     f"max distnr: {max_distnr:.3f} arcsec",
@@ -463,7 +475,7 @@ def create_subplot(ax, max_distnr):
     #     fontsize=ANNOTATION_FONTSIZE,
     # )
 
-    legend = ax.legend(fontsize=ANNOTATION_FONTSIZE - 5, loc=1)
+    legend = ax.legend(fontsize=ANNOTATION_FONTSIZE - 5, loc=1, ncol=2)
     for lh in legend.legendHandles:
         lh.set_alpha(1)
 
@@ -495,7 +507,7 @@ if __name__ == "__main__":
     ax3.set_title(f"Max host distance: {distances[2]} arcsec")
 
     for ax in [ax1, ax2, ax3]:
-        ax.set_ylim([20, 15])
+        ax.set_ylim([20, 13])
         ax.set_xlim([5, 450])
 
     ax1.set_ylabel(r"Observed peak magnitude", fontsize=AXIS_FONTSIZE - 1)

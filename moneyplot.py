@@ -342,11 +342,13 @@ if __name__ == "__main__":
         label=filterlabel["WISE+W1"],
     )
 
-    print(np.max(df_ztf_g.flux.values))
-    df_ztf_g.to_csv("test.csv")
-    quit()
-
-    lc_ax1.plot(dustmodel_dict["mjds"], dustmodel_dict["convolution"])
+    lc_ax1.plot(
+        dustmodel_dict["mjds"],
+        dustmodel_dict["convolution"],
+        color="tab:blue",
+        ls="dotted",
+        lw=1,
+    )
 
     lc_ax1.set_xlim([58570, 59460])
 

@@ -41,6 +41,7 @@ UV = [3800, 100]
 
 # MJD_INTERVALS = [[58700, 58720], [59023, 59043], [59110, 59130], [59220,59265]]
 MJD_INTERVALS = [[58700, 58720], [59006, 59130], [59220, 59271]]
+markers = {"WISE": "p", "P200": "s", "P48": ".", "Swift": "D"}
 
 
 def nu_to_ev(nu):
@@ -160,7 +161,7 @@ def create_sed(ax, epoch):
 
     ax.text(
         2.9e14,
-        1.85e-12,
+        2.65e-12,
         f"L = {total_luminosity:.1e}",
         bbox=bbox,
         fontsize=SMALL_FONTSIZE,
@@ -302,12 +303,34 @@ if __name__ == "__main__":
     SPECTRA_DIR = os.path.join(DATA_DIR, "spectra")
     LC_DIR = os.path.join(DATA_DIR, "lightcurves")
     FITDIR = os.path.join("fit", "double_blackbody")
+    DUSTDIR = os.path.join("fit", "dust_model")
 
     infile_lightcurve = os.path.join(LC_DIR, "full_lightcurve.csv")
+    infile_dustmodel = os.path.join(DUSTDIR, "dust_model.json")
 
     df = pd.read_csv(infile_lightcurve)
+
+    df["flux_density"] = utilities.abmag_to_flux(df.mag)
+    df["flux_density_err"] = utilities.abmag_err_to_flux_err(df.mag, df.mag_err)
+
+    fluxes = []
+    flux_errs = []
+    for row in df.iterrows():
+        instrband = row[1]["telescope"] + "+" + row[1]["band"]
+        flux, flux_err = utilities.flux_density_to_flux(
+            filter_wl[instrband], row[1].flux_density, row[1].flux_density_err
+        )
+        fluxes.append(flux)
+        flux_errs.append(flux_err)
+
+    df["flux"] = fluxes
+    df["flux_err"] = flux_errs
+
     df_ztf_g = df.query("telescope == 'P48' and band == 'ZTF_g'")
-    instrband = "P48+ZTF_g"
+    df_wise_w1 = df.query("telescope == 'WISE' and band == 'W1'")
+
+    with open(infile_dustmodel) as f:
+        dustmodel_dict = json.load(f)
 
     fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * 0.58))
 
@@ -328,7 +351,7 @@ if __name__ == "__main__":
     sed3 = fig.add_subplot(3, 5, (14, 15))
 
     sed_xlims = [4.5e13, 2e15]
-    sed_ylims = [1e-14, 2e-12]
+    sed_ylims = [4e-14, 3e-12]
 
     def set_scales(ax):
         ax.set_xscale("log")
@@ -357,23 +380,45 @@ if __name__ == "__main__":
     # sed1.legend(ncol=6,bbox_to_anchor=(1.2, 2.68),fancybox=True, shadow=False, fontsize=9, edgecolor="gray")
 
     lc_ax1.set_yscale("log")
-    lc_ylim = [5e-14, 2e-12]
+    lc_ylim = sed_ylims
     lc_ax1.set_ylim(lc_ylim)
-    flux_density = utilities.abmag_to_flux(df_ztf_g.mag)
-    flux_density_err = utilities.abmag_err_to_flux_err(df_ztf_g.mag, df_ztf_g.mag_err)
-    flux, flux_err = utilities.flux_density_to_flux(
-        filter_wl[instrband], flux_density, flux_density_err
-    )
+    # flux_density = utilities.abmag_to_flux(df_ztf_g.mag)
+    # flux_density_err = utilities.abmag_err_to_flux_err(df_ztf_g.mag, df_ztf_g.mag_err)
+    # flux, flux_err = utilities.flux_density_to_flux(
+    #     filter_wl[instrband], flux_density, flux_density_err
+    # )
 
     lc_ax1.errorbar(
         x=df_ztf_g.obsmjd,
-        y=flux,
-        yerr=flux_err,
-        color=cmap[instrband],
+        y=df_ztf_g.flux,
+        yerr=df_ztf_g.flux_err,
+        color=cmap["P48+ZTF_g"],
         marker=".",
         linestyle=" ",
-        label=filterlabel[instrband],
+        label=filterlabel["P48+ZTF_g"],
     )
+
+    lc_ax1.errorbar(
+        x=df_wise_w1.obsmjd,
+        y=df_wise_w1.flux,
+        yerr=df_wise_w1.flux_err,
+        color=cmap["WISE+W1"],
+        marker=markers["WISE"],
+        markersize=4,
+        linestyle=" ",
+        label=filterlabel["WISE+W1"],
+    )
+
+    lc_ax1.plot(
+        dustmodel_dict["mjds"],
+        dustmodel_dict["convolution"],
+        color="tab:blue",
+        ls="dotted",
+        lw=1,
+    )
+
+    lc_ax1.set_xlim([58570, 59460])
+
     d = cosmo.luminosity_distance(REDSHIFT)
     d = d.to(u.cm).value
     lumi = lambda flux: flux * 4 * np.pi * d ** 2
@@ -407,13 +452,24 @@ if __name__ == "__main__":
         color="tab:red",
     )
 
-    loc = [t_neutrino.mjd - 302, t_neutrino.mjd + 55, t_neutrino.mjd + 234]
+    bbox = dict(boxstyle="round", fc="w", ec="gray")
+    lc_ax1.text(
+        59273,
+        5e-13,
+        "Dust echo",
+        # rotation="vertical",
+        # bbox=bbox,
+        fontsize=BIG_FONTSIZE - 2,
+        color="tab:blue",
+    )
+
+    loc = [t_neutrino.mjd - 302, t_neutrino.mjd + 55, t_neutrino.mjd + 236]
 
     bbox = dict(boxstyle="circle", fc="#e5e5e5", ec="black")
     for i in range(1, 4):
         lc_ax1.text(
             loc[i - 1],
-            1.8e-12,
+            2e-12,
             i,
             # rotation="vertical",
             bbox=bbox,
@@ -439,6 +495,7 @@ if __name__ == "__main__":
         ax.text(
             4.2e13,
             2.7e-13,
+            # 1.5e-13,
             i + 1,
             # rotation="vertical",
             bbox=bbox,

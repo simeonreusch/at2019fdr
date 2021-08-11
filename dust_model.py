@@ -15,6 +15,118 @@ from scipy.interpolate import splev, splrep
 from lmfit import Model, Parameters, Minimizer, report_fit, minimize
 from astropy.cosmology import FlatLambdaCDM
 
+
+def plot_results_brute(result, best_vals=True, varlabels=None, output=None):
+    """Visualize the result of the brute force grid search.
+
+    The output file will display the chi-square value per parameter and contour
+    plots for all combination of two parameters.
+
+    Inspired by the `corner` package (https://github.com/dfm/corner.py).
+
+    Parameters
+    ----------
+    result : :class:`~lmfit.minimizer.MinimizerResult`
+        Contains the results from the :meth:`brute` method.
+
+    best_vals : bool, optional
+        Whether to show the best values from the grid search (default is True).
+
+    varlabels : list, optional
+        If None (default), use `result.var_names` as axis labels, otherwise
+        use the names specified in `varlabels`.
+
+    output : str, optional
+        Name of the output PDF file (default is 'None')
+    """
+    npars = len(result.var_names)
+    _fig, axes = plt.subplots(npars, npars, dpi=300)
+
+    if not varlabels:
+        varlabels = result.var_names
+    if best_vals and isinstance(best_vals, bool):
+        best_vals = result.params
+
+    for i, par1 in enumerate(result.var_names):
+        for j, par2 in enumerate(result.var_names):
+
+            # parameter vs chi2 in case of only one parameter
+            if npars == 1:
+                axes.plot(result.brute_grid, result.brute_Jout, "o", ms=3)
+                axes.set_ylabel(r"$\chi^{2}$")
+                axes.set_xlabel(varlabels[i])
+                if best_vals:
+                    axes.axvline(best_vals[par1].value, ls="dashed", color="r")
+
+            # parameter vs chi2 profile on top
+            elif i == j and j < npars - 1:
+                if i == 0:
+                    axes[0, 0].axis("off")
+                ax = axes[i, j + 1]
+                red_axis = tuple([a for a in range(npars) if a != i])
+                ax.plot(
+                    np.unique(result.brute_grid[i]),
+                    np.minimum.reduce(result.brute_Jout, axis=red_axis),
+                    "o",
+                    ms=3,
+                )
+                ax.set_ylabel(r"$\chi^{2}$")
+                ax.yaxis.set_label_position("right")
+                ax.yaxis.set_ticks_position("right")
+                ax.set_xticks([])
+                if best_vals:
+                    ax.axvline(best_vals[par1].value, ls="dashed", color="r")
+
+            # parameter vs chi2 profile on the left
+            elif j == 0 and i > 0:
+                ax = axes[i, j]
+                red_axis = tuple([a for a in range(npars) if a != i])
+                ax.plot(
+                    np.minimum.reduce(result.brute_Jout, axis=red_axis),
+                    np.unique(result.brute_grid[i]),
+                    "o",
+                    ms=3,
+                )
+                ax.invert_xaxis()
+                ax.set_ylabel(varlabels[i])
+                if i != npars - 1:
+                    ax.set_xticks([])
+                else:
+                    ax.set_xlabel(r"$\chi^{2}$")
+                if best_vals:
+                    ax.axhline(best_vals[par1].value, ls="dashed", color="r")
+
+            # contour plots for all combinations of two parameters
+            elif j > i:
+                ax = axes[j, i + 1]
+                red_axis = tuple([a for a in range(npars) if a not in (i, j)])
+                X, Y = np.meshgrid(
+                    np.unique(result.brute_grid[i]), np.unique(result.brute_grid[j])
+                )
+                # lvls1 = np.linspace(result.brute_Jout.min(),
+                #                     np.median(result.brute_Jout)/2.0, 7, dtype='int')
+                # lvls2 = np.linspace(np.median(result.brute_Jout)/2.0,
+                #                     np.median(result.brute_Jout), 3, dtype='int')
+                # lvls = np.unique(np.concatenate((lvls1, lvls2)))
+                ax.contourf(
+                    X.T, Y.T, np.minimum.reduce(result.brute_Jout, axis=red_axis)
+                )  # , lvls, norm=mpl.colors.LogNorm())
+                ax.set_yticks([])
+                if best_vals:
+                    ax.axvline(best_vals[par1].value, ls="dashed", color="r")
+                    ax.axhline(best_vals[par2].value, ls="dashed", color="r")
+                    ax.plot(best_vals[par1].value, best_vals[par2].value, "rs", ms=3)
+                if j != npars - 1:
+                    ax.set_xticks([])
+                else:
+                    ax.set_xlabel(varlabels[i])
+                if j - i >= 2:
+                    axes[i, j].axis("off")
+
+    if output is not None:
+        plt.savefig(output)
+
+
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 nice_fonts = {
@@ -26,8 +138,9 @@ mpl.rcParams.update(nice_fonts)
 mpl.rcParams["text.usetex"] = True
 mpl.rcParams["text.latex.preamble"] = [r"\usepackage{amsmath}"]  # for \text command
 
-FIT = False
-PLOT = False
+FIT = True
+FITMETHOD = "brute"
+PLOT = True
 
 DPI = 400
 FIG_WIDTH = 6
@@ -52,19 +165,14 @@ PLOT_DIR = "plots"
 df_fit = pd.read_csv(infile_fitdf)
 
 opt_ir_delay_day = (MJD_IR_PEAK - MJD_OPT_PEAK) * u.day
-
 opt_ir_delay_s = opt_ir_delay_day.to(u.s)
 
-light_travel_distance = opt_ir_delay_s * const.c
-
-light_travel_distance = light_travel_distance.to(u.cm)
+light_travel_distance = (opt_ir_delay_s * const.c).to(u.cm)
 
 
-fitted_max_optical_radius = np.max(df_fit["optical_radius"].values)
-fitted_max_optical_radius = fitted_max_optical_radius * u.cm
+fitted_max_optical_radius = np.max(df_fit["optical_radius"].values) * u.cm
 
-fitted_max_ir_radius = np.max(df_fit["infrared_radius"].values)
-fitted_max_ir_radius = fitted_max_ir_radius * u.cm
+fitted_max_ir_radius = np.max(df_fit["infrared_radius"].values) * u.cm
 
 
 def equation_12(T=1850, R=0.1):
@@ -119,19 +227,23 @@ spline_g = splrep(obsmjd_g, nu_fnu_g, s=4e-25)
 
 mjds = np.arange(58000, 59801, 1)
 spline_eval_g = splev(mjds, spline_g)
-spline_final = []
+spline_g = []
 
 for i, mjd in enumerate(mjds):
     if mjd < 58600 or mjd > 59450:
-        spline_final.append(0)
+        spline_g.append(0)
     else:
-        spline_final.append(spline_eval_g[i])
+        spline_g.append(spline_eval_g[i])
 
 # Now we create a box function
 
 
 def minimizer_function(params, x, data=None, data_err=None, **kwargs):
+
+    do_plot = False
+
     delay = params["delay"]
+    ltt = params["ltt"]
     amplitude = params["amplitude"]
 
     mjds = np.arange(58000, 59801, 1)
@@ -140,7 +252,7 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
 
     _boxfunc = []
     for i, mjd in enumerate(mjds):
-        if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * delay)):
+        if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * ltt)):
             _boxfunc.append(0)
         else:
             _boxfunc.append(1)
@@ -149,15 +261,19 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
         convolve(_spline_g, _boxfunc, mode="same") / sum(_boxfunc) * amplitude
     )
 
-    spline_conv = splrep(mjds, _convolution, s=1e-30)
+    spline_conv = splrep(mjds + delay, _convolution, s=1e-30)
 
     residuals = []
+    fitvals = []
+
     for i, flux in enumerate(data):
+
         mjd = x[i]
         j = np.where(mjds == mjd)
         flux_err = data_err[i]
 
-        fitval = splev(mjd + delay, spline_conv)
+        fitval = splev(mjd, spline_conv)
+        fitvals.append(fitval)
 
         delta = fitval - flux
 
@@ -165,63 +281,125 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
 
         residuals.append(res)
 
+    vals = []
+    for mjd in mjds:
+        vals.append(splev(mjd, spline_conv))
+
     residuals = np.array(residuals)
 
     chisq = np.sum(residuals ** 2)
 
-    print(chisq)
+    print(f"Chisquare = {chisq:.2f}")
+
+    if do_plot:
+        fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * GOLDEN_RATIO))
+        ax = fig.add_subplot(1, 1, 1)
+        ax2 = ax.twinx()
+        ax.set_xlim([58000 + 500, 59800])
+
+        ax.set_yscale("log")
+        ax.set_ylim([1e-14, 1e-11])
+        ax.set_xlabel("Days since peak")
+        ax.set_ylabel(r"$\nu F_{\nu}$ [erg/s/cm$^2$]")
+        ax2.set_ylabel("Transfer function")
+
+        ax.scatter(x, data)
+
+        ax.plot(
+            mjds,
+            _spline_g,
+            color="tab:green",
+        )
+
+        ax.plot(
+            mjds + delay,
+            [splev(mjd, spline_conv) for mjd in mjds],
+            color="tab:blue",
+        )
+
+        ax.plot(mjds, vals, color="tab:red")
+
+        ax.scatter(x, fitvals, color="tab:red")
+
+        outfile = os.path.join(
+            "test",
+            f"del_{delay.value:.1f}_ltt_{ltt.value}_ampl_{amplitude.value:.2f}.png",
+        )
+        plt.savefig(outfile)
 
     return residuals
 
 
 params = Parameters()
-params.add("delay", min=140, max=220, value=180)  # , min=50, max=350)
-params.add("amplitude", min=0.8, max=1.8, value=1.0)  # , min=0.5, max=2.)
+
+if FITMETHOD == "brute":
+
+    params.add("delay", min=165, max=185)
+    params.add("ltt", min=190, max=210)
+    params.add("amplitude", min=1.2, max=1.5)
+
+else:
+
+    params.add("delay", min=100, max=250)
+    params.add("ltt", min=150, max=250)
+    params.add("amplitude", min=1.1, max=1.5)
 
 x = obsmjd_w1
 data = nu_fnu_w1
 data_err = nu_fnu_err_w1
 
+x = np.insert(x, 0, 58600)
+data = np.insert(data, 0, 0)
+# looks good
+# data_err = np.insert(data_err, 0, 1e-14)
+# has errors
+data_err = np.insert(data_err, 0, 1e-17)
+
+print(x)
+print(data)
+print(data_err)
+
 minimizer = Minimizer(
     userfcn=minimizer_function,
     params=params,
     fcn_args=(x, data, data_err),
-    fcn_kws={"spline_g": spline_final},
+    fcn_kws={"spline_g": spline_g},
     calc_covar=True,
 )
 
 if FIT:
-    FITMETHOD = "brute"
 
-    if FITMETHOD == "brute":
-        res = minimizer.minimize(method=FITMETHOD, Ns=50, workers=1)
+    if FITMETHOD == "basinhopping":
+        res = minimizer.minimize(method=FITMETHOD, Ns=30)
     else:
         res = minimizer.minimize(method=FITMETHOD)
+
     print(report_fit(res))
 
-    # print(report_fit(res.params, min_correl=0.01))
+    if FITMETHOD == "brute":
+        plot_results_brute(res, best_vals=True, varlabels=None, output="test.png")
 
+    ltt = res.params["ltt"].value
     delay = res.params["delay"].value
     amplitude = res.params["amplitude"].value
 
 else:
-    delay = 172.65306
-    amplitude = 1.18775510
-    # delay = 183
-    # amplitude = 1.3
+    delay = 178.33333
+    ltt = 222.66667
+    amplitude = 1.38888
 
-dust_distance_model = (delay * u.day * const.c).to(u.cm)
+dust_distance_model = (ltt * u.day * const.c).to(u.cm)
 
 
 boxfunc = []
 for i, mjd in enumerate(mjds):
-    if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * delay)):
+    if mjd < (MJD_OPT_PEAK) or mjd > (MJD_OPT_PEAK + (2 * ltt)):
         boxfunc.append(0)
     else:
         boxfunc.append(1)
 
 # We calculate the convolution
-convolution = convolve(spline_final, boxfunc, mode="same") / sum(boxfunc) * amplitude
+convolution = convolve(spline_g, boxfunc, mode="same") / sum(boxfunc) * amplitude
 
 convolution_data = {"mjds": list(mjds + delay), "convolution": list(convolution)}
 convolution_outfile = os.path.join(FITDIR, "dust_model.json")
@@ -229,6 +407,10 @@ convolution_outfile = os.path.join(FITDIR, "dust_model.json")
 with open(convolution_outfile, "w") as f:
     json.dump(convolution_data, f)
 
+spline_conv = splrep(mjds + delay, convolution, s=1e-30)
+vals = []
+for mjd in mjds:
+    vals.append(splev(mjd, spline_conv))
 
 if PLOT:
 
@@ -237,14 +419,14 @@ if PLOT:
     fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * GOLDEN_RATIO))
     ax = fig.add_subplot(1, 1, 1)
     ax2 = ax.twinx()
-    ax.set_xlim([58000 - MJD_OPT_PEAK + 500, 59800 - MJD_OPT_PEAK])
+    ax.set_xlim([58000 + 500, 59800])
     ax.set_yscale("log")
     ax.set_ylim([1e-14, 1e-11])
     ax.set_xlabel("Days since peak")
     ax.set_ylabel(r"$\nu F_{\nu}$ [erg/s/cm$^2$]")
     ax2.set_ylabel("Transfer function")
     ax.errorbar(
-        obsmjd_g - MJD_OPT_PEAK,
+        obsmjd_g,
         nu_fnu_g,
         nu_fnu_err_g,
         color="tab:green",
@@ -253,7 +435,7 @@ if PLOT:
         fmt=".",
     )
     ax.errorbar(
-        obsmjd_w1 - MJD_OPT_PEAK,
+        obsmjd_w1,
         nu_fnu_w1,
         nu_fnu_err_w1,
         color="tab:blue",
@@ -264,19 +446,21 @@ if PLOT:
 
     # ax.errorbar(obsmjd_w2-MJD_OPT_PEAK, nu_fnu_w2, nu_fnu_err_w2, color="tab:red", label="WISE W2", fmt=".")
 
-    ax.plot(mjds - MJD_OPT_PEAK, spline_final, c="green")
+    ax.plot(mjds, spline_g, c="green")
 
-    ax.plot(mjds - MJD_OPT_PEAK + delay, convolution, c="tab:blue", alpha=1)
-    # ax.plot(mjds-MJD_OPT_PEAK+delay, spline_eval_conv, c="black")
+    # ax.plot(mjds + delay, convolution, c="tab:blue", alpha=1)
+
+    ax.plot(mjds, vals, color="tab:red")
 
     ax2.plot(
-        mjds - MJD_OPT_PEAK + delay,
+        mjds + delay,
         boxfunc,
         ls="dashed",
         c="black",
         alpha=0.3,
         label="transfer function",
     )
+
     # ax.plot(mjds-MJD_OPT_PEAK, convolution, c="red")
 
     ax.legend(loc=2)
@@ -286,12 +470,13 @@ if PLOT:
     fig.savefig(outpath_png)
     fig.savefig(outpath_pdf)
 
-delay = delay * u.d
+
+ltt = ltt * u.d
 
 print("\n")
 print(f"--- TIME DELAYS ----")
 print(f"time delay between optical and IR peak: {opt_ir_delay_day:.0f}")
-print(f"time delay inferred from Sjoert's model (boxfunc/2): {delay:.0f}")
+print(f"time delay inferred from Sjoert's model (boxfunc/2): {ltt:.0f}")
 print("\n")
 print("----- DUST DISTANCE -----")
 print(f"inferred from light travel time: {light_travel_distance:.2e}")
@@ -299,7 +484,7 @@ print(f"inferred from BB fit: {fitted_max_ir_radius:.2e}")
 print(f"inferred from Sjoert's model: {dust_distance_model:.2e}")
 
 
-dist_sjoertmethod = delay.to(u.s) * const.c
+dist_sjoertmethod = ltt.to(u.s) * const.c
 R_Tywin_sjoertmethod = dist_sjoertmethod.to(u.pc).value
 
 T_Tywin = 1850
@@ -324,16 +509,18 @@ print("--------------------")
 
 # Now we integrate this over the optical lightcurve
 
-time = spline_g[0] - min(spline_g[0])
+spline_g_full = splrep(obsmjd_g, nu_fnu_g, s=4e-25)
+
+time = spline_g_full[0] - min(spline_g_full[0])
 time = [(t * u.day).to(u.s).value for t in time]
 
-max_of_g = max(spline_g[1])
+max_of_g = max(spline_g_full[1])
 
-new_spline_paper = spline_g[1] / max_of_g * L_abs_paper.value
+new_spline_paper = spline_g_full[1] / max_of_g * L_abs_paper.value
 E_abs_paper = np.trapz(y=new_spline_paper, x=time) * u.erg
 log10E_abs_paper = np.log10(E_abs_paper.value)
 
-new_spline_frombb = spline_g[1] / max_of_g * L_abs_frombb.value
+new_spline_frombb = spline_g_full[1] / max_of_g * L_abs_frombb.value
 E_abs_frombb = np.trapz(y=new_spline_frombb, x=time) * u.erg
 log10E_abs_frombb = np.log10(E_abs_frombb.value)
 
@@ -350,7 +537,7 @@ d = d.to(u.cm).value
 L_abs_mod = max_of_g * 4 * np.pi * d ** 2
 
 
-spline_dust = spline_final / max(spline_final) * L_dust_frombb.value
+spline_dust = spline_g / max(spline_g) * L_dust_frombb.value
 
 
 # spline_ir = spline_final / max_of_g * L_abs_mod
