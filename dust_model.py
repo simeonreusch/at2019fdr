@@ -16,6 +16,11 @@ from lmfit import Model, Parameters, Minimizer, report_fit, minimize
 from astropy.cosmology import FlatLambdaCDM
 
 
+FIT = False
+FITMETHOD = "lm"
+PLOT = False
+
+
 def plot_results_brute(result, best_vals=True, varlabels=None, output=None):
     """Visualize the result of the brute force grid search.
 
@@ -138,9 +143,6 @@ mpl.rcParams.update(nice_fonts)
 mpl.rcParams["text.usetex"] = True
 mpl.rcParams["text.latex.preamble"] = [r"\usepackage{amsmath}"]  # for \text command
 
-FIT = True
-FITMETHOD = "brute"
-PLOT = True
 
 DPI = 400
 FIG_WIDTH = 6
@@ -175,14 +177,21 @@ fitted_max_optical_radius = np.max(df_fit["optical_radius"].values) * u.cm
 fitted_max_ir_radius = np.max(df_fit["infrared_radius"].values) * u.cm
 
 
-def equation_12(T=1850, R=0.1):
+def equation_12(T=1850, R=0.1, R_err=None):
     """
     T in Kelvin
     Radius in parsec
     """
     L_abs = 5 * 10 ** 44 * (R / 0.1) ** 2 * (T / 1850) ** 5.8 * u.erg / u.s
 
-    return L_abs
+    L_abs_dR = 10 * 10 ** 44 * (R / 0.1) * (T / 1850) ** 5.8 * u.erg / u.s
+
+    if R_err is not None:
+        L_abs_err = np.sqrt(L_abs_dR ** 2 * R_err ** 2)
+    else:
+        L_abs_err = None
+
+    return L_abs, L_abs_err
 
 
 infile_lc = os.path.join("data", "lightcurves", "full_lightcurve.csv")
@@ -353,11 +362,7 @@ data = np.insert(data, 0, 0)
 # looks good
 # data_err = np.insert(data_err, 0, 1e-14)
 # has errors
-data_err = np.insert(data_err, 0, 1e-17)
-
-print(x)
-print(data)
-print(data_err)
+data_err = np.insert(data_err, 0, 1e-13)
 
 minimizer = Minimizer(
     userfcn=minimizer_function,
@@ -384,11 +389,18 @@ if FIT:
     amplitude = res.params["amplitude"].value
 
 else:
-    delay = 178.33333
-    ltt = 222.66667
-    amplitude = 1.38888
+    delay = 178.399887
+    delay_err = 5
+    ltt = 198.228677
+    ltt_err = 178
+    amplitude = 1.35463143
+    ampl_err = 0.1
 
 dust_distance_model = (ltt * u.day * const.c).to(u.cm)
+dust_distance_model_err = (ltt_err * u.day * const.c).to(u.cm)
+
+dust_distance_model_pc = dust_distance_model.to(u.pc)
+dust_distance_model_err_pc = dust_distance_model_err.to(u.pc)
 
 
 boxfunc = []
@@ -481,15 +493,26 @@ print("\n")
 print("----- DUST DISTANCE -----")
 print(f"inferred from light travel time: {light_travel_distance:.2e}")
 print(f"inferred from BB fit: {fitted_max_ir_radius:.2e}")
-print(f"inferred from Sjoert's model: {dust_distance_model:.2e}")
+print(
+    f"inferred from Sjoert's model: {dust_distance_model:.2e} +/- {dust_distance_model_err:.2e}"
+)
+print(f"[{dust_distance_model_pc:.3f} +/- {dust_distance_model_err_pc:.3f}]")
 
 
-dist_sjoertmethod = ltt.to(u.s) * const.c
-R_Tywin_sjoertmethod = dist_sjoertmethod.to(u.pc).value
+# dist_sjoertmethod = ltt.to(u.s) * const.c
+# R_Tywin_sjoertmethod = (ltt.to(u.s) * const.c).to(u.pc).value
+
 
 T_Tywin = 1850
 
-L_abs_paper = equation_12(T=T_Tywin, R=R_Tywin_sjoertmethod)
+L_abs_paper, L_abs_paper_err = equation_12(
+    T=T_Tywin, R=dust_distance_model_pc.value, R_err=dust_distance_model_err_pc.value
+)
+
+print(L_abs_paper)
+print(L_abs_paper_err)
+print("this is BS!!!!")
+
 log10L_abs_paper = np.log10(L_abs_paper.value)
 L_abs_frombb = 1.02e45 * u.erg / u.s
 log10_L_abs_frombb = np.log10(L_abs_frombb.value)
@@ -498,7 +521,7 @@ L_dust_frombb = 4.93e44 * u.erg / u.s
 
 print("\n")
 print("----- ENERGETICS (ALL FROM SJOERT'S MODEL) -------")
-print(f"R used for following calculations: {R_Tywin_sjoertmethod:.3f} pc")
+print(f"R used for following calculations: {dust_distance_model_pc:.3f}")
 print(f"T used for following calculations: {T_Tywin} K")
 print("\n")
 print(f"L_abs (paper eq. 12) = {L_abs_paper:.2e}")
