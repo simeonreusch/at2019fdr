@@ -287,6 +287,7 @@ if __name__ == "__main__":
 
     df_ztf_g = df.query("telescope == 'P48' and band == 'ZTF_g'")
     df_wise_w1 = df.query("telescope == 'WISE' and band == 'W1'")
+    df_p200 = df.query("telescope == 'P200' and band == 'Ks'")
 
     with open(infile_dustmodel) as f:
         dustmodel_dict = json.load(f)
@@ -342,10 +343,21 @@ if __name__ == "__main__":
         label=filterlabel["WISE+W1"],
     )
 
+    lc_ax1.errorbar(
+        x=df_p200.obsmjd,
+        y=df_p200.flux,
+        yerr=df_p200.flux_err,
+        color=cmap["P200+Ks"],
+        marker=markers["P200"],
+        markersize=3,
+        linestyle=" ",
+        label=filterlabel["P200+Ks"],
+    )
+
     lc_ax1.plot(
         dustmodel_dict["mjds"],
         dustmodel_dict["convolution"],
-        color="tab:blue",
+        color="black",
         ls="dotted",
         lw=1,
     )
@@ -387,13 +399,15 @@ if __name__ == "__main__":
 
     bbox = dict(boxstyle="round", fc="w", ec="gray")
     lc_ax1.text(
-        59310,
-        4e-13,
+        # 59310,
+        # 4e-13,
+        58660,
+        1.25e-13,
         "Dust echo",
         # rotation="vertical",
         # bbox=bbox,
         fontsize=BIG_FONTSIZE - 2,
-        color="tab:blue",
+        color="black",
     )
 
     loc_upper = (0.05, 0.65)
