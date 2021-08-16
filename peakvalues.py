@@ -15,10 +15,10 @@ filter_wl = utilities.load_info_json("filter_wl")
 
 infile = os.path.join("data", "lightcurves", "full_lightcurve.csv")
 
-TELESCOPE = "WISE"
-BAND = "W1"
-# TELESCOPE = "P48"
-# BAND = "ZTF_g"
+# TELESCOPE = "WISE"
+# BAND = "W1"
+TELESCOPE = "P48"
+BAND = "ZTF_g"
 
 REDSHIFT = 0.267
 
