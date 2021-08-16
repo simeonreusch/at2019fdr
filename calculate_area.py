@@ -112,12 +112,3 @@ else:
 
     print(df)
     df = pd.read_csv("areas.csv").drop(columns=["Unnamed: 0"])
-
-
-# areas = df["corrected_area"].values
-
-# areas = areas[~np.isnan(areas)]
-
-# area_total = np.sum(areas)
-
-# print(area_total)
