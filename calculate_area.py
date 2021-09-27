@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from mmapy.neutrino_scanner import NeutrinoScanner
+from nuztf.neutrino_scanner import NeutrinoScanner
+from nuztf.parse_nu_gcn import find_gcn_no, parse_gcn_circular, get_latest_gcn
 from ampel.log.AmpelLogger import AmpelLogger
 import pandas as pd
 import numpy as np
@@ -52,8 +53,8 @@ if RECALC:
         try:
 
             nu = NeutrinoScanner(neutrino, logger=logger)
-            gcn_no = nu.find_gcn_no(neutrino)
-            gcn_info = gcn_parser.parse_gcn_circular(gcn_no)
+            gcn_no = find_gcn_no(neutrino)
+            gcn_info = parse_gcn_circular(gcn_no)
             RA = gcn_info["ra"]
             Dec = gcn_info["dec"]
             RA_max = nu.ra_max
@@ -109,6 +110,5 @@ if RECALC:
     df.to_csv("areas.csv")
 
 else:
-
-    print(df)
     df = pd.read_csv("areas.csv").drop(columns=["Unnamed: 0"])
+    print(df)

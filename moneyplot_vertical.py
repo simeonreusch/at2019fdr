@@ -26,12 +26,12 @@ filter_wl = utilities.load_info_json("filter_wl")
 wl_filter = {v: k for k, v in filter_wl.items()}
 
 XRT_COLUMN = "flux0310_bb_25eV"
-nice_fonts = {
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": "Times New Roman",
-}
-matplotlib.rcParams.update(nice_fonts)
+# nice_fonts = {
+#     "text.usetex": True,
+#     "font.family": "serif",
+#     "font.serif": "Times New Roman",
+# }
+# matplotlib.rcParams.update(nice_fonts)
 
 MIR = [250000, 25000]
 NIR = [25000, 7800]
@@ -160,8 +160,8 @@ def create_sed(ax, epoch):
     )
 
     ax.text(
-        2.9e14,
-        2.65e-12,
+        2.7e14,
+        2.5e-12,
         f"L = {total_luminosity:.1e}",
         bbox=bbox,
         fontsize=SMALL_FONTSIZE,
@@ -334,7 +334,7 @@ if __name__ == "__main__":
 
     fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * 0.58))
 
-    plt.subplots_adjust(bottom=0.12, left=0.12, top=0.86, right=0.9)
+    plt.subplots_adjust(bottom=0.12, left=0.11, top=0.86, right=0.89)
     # lc_ax1 = fig.add_subplot(3,4,(1,11))
     # sed1 = fig.add_subplot(3,4,4)
     # sed2 = fig.add_subplot(3,4,8)
@@ -448,7 +448,7 @@ if __name__ == "__main__":
         "Neutrino",
         # rotation="vertical",
         # bbox=bbox,
-        fontsize=BIG_FONTSIZE - 2,
+        fontsize=BIG_FONTSIZE - 4,
         color="tab:red",
     )
 
@@ -459,11 +459,11 @@ if __name__ == "__main__":
         "Dust echo",
         # rotation="vertical",
         # bbox=bbox,
-        fontsize=BIG_FONTSIZE - 2,
+        fontsize=BIG_FONTSIZE - 4,
         color="tab:blue",
     )
 
-    loc = [t_neutrino.mjd - 302, t_neutrino.mjd + 55, t_neutrino.mjd + 236]
+    loc = [t_neutrino.mjd - 302, t_neutrino.mjd + 52, t_neutrino.mjd + 236]
 
     bbox = dict(boxstyle="circle", fc="#e5e5e5", ec="black")
     for i in range(1, 4):
@@ -473,7 +473,7 @@ if __name__ == "__main__":
             i,
             # rotation="vertical",
             bbox=bbox,
-            fontsize=BIG_FONTSIZE - 1,
+            fontsize=BIG_FONTSIZE - 2,
             color="black",
         )
 
@@ -499,15 +499,15 @@ if __name__ == "__main__":
             i + 1,
             # rotation="vertical",
             bbox=bbox,
-            fontsize=BIG_FONTSIZE - 1,
+            fontsize=BIG_FONTSIZE - 2,
             color="black",
         )
 
     params = {
-        "MIR": [6e13, 7.0e-13, "red"],
-        "NIR": [1.8e14, 7.0e-13, "orange"],
-        "Opt": [4.8e14, 7.0e-13, "green"],
-        "UV": [1.15e15, 7.0e-13, "violet"],
+        "MIR": [6e13, 8e-13, "red"],
+        "NIR": [1.8e14, 8.0e-13, "orange"],
+        "Opt": [4.8e14, 8.0e-13, "green"],
+        "UV": [1.15e15, 8.0e-13, "violet"],
     }
 
     bbox = dict(boxstyle="round", fc="w", ec="black")

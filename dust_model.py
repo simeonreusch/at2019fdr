@@ -184,7 +184,7 @@ def equation_12(T=1850, R=0.1, R_err=None):
     """
     L_abs = 5 * 10 ** 44 * (R / 0.1) ** 2 * (T / 1850) ** 5.8 * u.erg / u.s
 
-    L_abs_dR = 10 * 10 ** 44 * (R / 0.1) * (T / 1850) ** 5.8 * u.erg / u.s
+    L_abs_dR = 10 * 10 ** 44 * (R) / 0.1 ** 2 * (T / 1850) ** 5.8 * u.erg / u.s
 
     if R_err is not None:
         L_abs_err = np.sqrt(L_abs_dR ** 2 * R_err ** 2)
@@ -279,6 +279,7 @@ def minimizer_function(params, x, data=None, data_err=None, **kwargs):
 
         mjd = x[i]
         j = np.where(mjds == mjd)
+
         flux_err = data_err[i]
 
         fitval = splev(mjd, spline_conv)
@@ -362,7 +363,8 @@ data = np.insert(data, 0, 0)
 # looks good
 # data_err = np.insert(data_err, 0, 1e-14)
 # has errors
-data_err = np.insert(data_err, 0, 1e-13)
+# data_err = np.insert(data_err, 0, 1e-13)
+data_err = np.insert(data_err, 0, 1e-15)
 
 minimizer = Minimizer(
     userfcn=minimizer_function,
@@ -387,12 +389,15 @@ if FIT:
     ltt = res.params["ltt"].value
     delay = res.params["delay"].value
     amplitude = res.params["amplitude"].value
+    ltt_err = res.params["ltt"].stderr
+    delay_err = res.params["delay"].stderr
+    ampl_err = res.params["amplitude"].stderr
 
 else:
     delay = 178.399887
     delay_err = 5
     ltt = 198.228677
-    ltt_err = 178
+    ltt_err = 198 * 0.05
     amplitude = 1.35463143
     ampl_err = 0.1
 
@@ -511,7 +516,6 @@ L_abs_paper, L_abs_paper_err = equation_12(
 
 print(L_abs_paper)
 print(L_abs_paper_err)
-print("this is BS!!!!")
 
 log10L_abs_paper = np.log10(L_abs_paper.value)
 L_abs_frombb = 1.02e45 * u.erg / u.s

@@ -16,14 +16,18 @@ from modelSED import utilities
 from ztffps import connectors
 from astroquery.ned import Ned
 
-nice_fonts = {
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": "Times New Roman",
-}
-mpl.rcParams.update(nice_fonts)
-mpl.rcParams["text.usetex"] = True
-mpl.rcParams["text.latex.preamble"] = [r"\usepackage{amsmath}"]  # for \text command
+
+# style = {
+#         "pgf.rcfonts":False,
+#         "pgf.texsystem": "pdflatex",
+#         "text.usetex": True,
+#         "font.family": "sans-serif"
+#         }
+# #set
+# mpl.rcParams.update(style)
+
+# mpl.rcParams["text.usetex"] = True
+# mpl.rcParams["text.latex.preamble"] = [r"\usepackage{amsmath}"]
 
 RELOAD_AVRO_FROM_AMPEL = False
 
@@ -113,7 +117,7 @@ def create_subplot(ax, max_distnr):
             "peakmag": 16.7645092010498,
             "lumi": bran_lumi,
             "distnr": 0.2851865142583845,
-            "loc": (140, 16.57),
+            "loc": (135, 16.57),
             # "loc": (86, 0.97e-5),
             "label": "AT2019aalc",
         },
@@ -427,8 +431,12 @@ def create_subplot(ax, max_distnr):
     # ax1.set_ylim([-5, -25])
     # ax.set_xlim([5, 600])
     # ax1.set_yticks([-5, -10, -15, -20, -25])
+
+    # fmt = mpl.ticker.StrMethodFormatter("{x}")
     ax.xaxis.set_major_formatter(ScalarFormatter())
-    ax.ticklabel_format(style="plain", axis="x")
+    # ax.xaxis.set_major_formatter(fmt)
+    ax.ticklabel_format(axis="x")
+    # ax.xaxis.get_major_formatter()._usetex = False
 
     for i, name in enumerate(plotparams.keys()):
         param = plotparams[name]
@@ -459,7 +467,7 @@ def create_subplot(ax, max_distnr):
                 SPECIAL_OBJECTS[obj]["label"],
                 SPECIAL_OBJECTS[obj]["loc"],
                 color="black",
-                fontsize=ANNOTATION_FONTSIZE - 3,
+                fontsize=ANNOTATION_FONTSIZE - 4,
             )
     # plt.annotate(
     #     f"max distnr: {max_distnr:.3f} arcsec",
@@ -512,8 +520,12 @@ if __name__ == "__main__":
 
     ax1.set_ylabel(r"Observed peak magnitude", fontsize=AXIS_FONTSIZE - 1)
 
+    # ax2.set_xlabel(
+    #     r"Rest-frame duration ($F \geq \frac{F_{\text{peak}}}{2}$) [days]",
+    #     fontsize=AXIS_FONTSIZE - 1,
+    # )
     ax2.set_xlabel(
-        r"Rest-frame duration ($F \geq \frac{F_{\text{peak}}}{2}$) [days]",
+        r"Rest-frame duration ($F \geq \frac{F_{peak}}{2}$) [days]",
         fontsize=AXIS_FONTSIZE - 1,
     )
 

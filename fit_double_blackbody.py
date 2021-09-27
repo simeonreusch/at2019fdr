@@ -23,14 +23,8 @@ nice_fonts = {
 }
 matplotlib.rcParams.update(nice_fonts)
 
-OLD_P200 = False
 
-if OLD_P200:
-    LIGHTCURVE_INFILE = os.path.join(
-        "data", "lightcurves", "full_lightcurve_oldp200.csv"
-    )
-else:
-    LIGHTCURVE_INFILE = os.path.join("data", "lightcurves", "full_lightcurve_final.csv")
+LIGHTCURVE_INFILE = os.path.join("data", "lightcurves", "full_lightcurve.csv")
 
 
 MJD_INTERVALS = [[58700, 58720], [59006, 59130], [59220, 59271]]
@@ -53,18 +47,24 @@ FITDIR = os.path.join("fit", "double_blackbody")
 # GLOBAL_AV = 1.48477495
 # GLOBAL_RV = 3.93929588
 
-FITMETHOD = "basinhopping"
+FITMETHOD = "lm"
+
+FIXTEMP2 = True
+TEMP2 = 1722.21882
+TEMP2_ERR = 65.8643689
 
 ## EXTINCTION FROM EPOCH 0
-# GLOBAL_AV = 0.3643711523794127
-# GLOBAL_RV = 4.2694173002543225
-GLOBAL_AV = 0.2662317621632567
-GLOBAL_RV = 3.127271539497185
+
+# GLOBAL_AV = 0.2662317621632567
+# GLOBAL_RV = 3.127271539497185
+GLOBAL_AV = 0.24925786
+GLOBAL_RV = 3.11712381
 
 REFIT = True
 FIT = 3
-INTERVALS = [0, 1, 2]
-# INTERVALS = [0]
+INTERVALS = [0]
+
+
 EXTINCTIONFIT_INTERVAL = 4
 
 H_CORRECTION_I_BAND = 1.0495345056821688
@@ -90,7 +90,10 @@ def double_blackbody_minimizer(params, x, data=None, data_err=None, **kwargs):
     temp1 = params["temp1"]
     scale1 = params["scale1"]
     if FIT == 3:
-        temp2 = params["temp2"]
+        if "temp2" in params:
+            temp2 = params["temp2"]
+        else:
+            temp2 = TEMP2
         scale2 = params["scale2"]
     if "extinction_av" in params:
         extinction_av = params["extinction_av"]
@@ -265,8 +268,9 @@ for INTERVAL in INTERVALS:
     params.add("scale1", value=1e23, min=1e18, max=1e27)
 
     if FIT == 3:
-        params.add("temp2", value=1400, min=100, max=150000)
         params.add("scale2", value=1e20, min=1e18, max=1e27)
+        if not FIXTEMP2:
+            params.add("temp2", value=1400, min=100, max=150000)
     if (FIT == 1 or FIT == 3) and INTERVAL == EXTINCTIONFIT_INTERVAL:
         params.add("extinction_av", value=0.1, min=0.000000001, max=4)
         params.add("extinction_rv", value=3.1, min=1, max=5)
@@ -306,6 +310,9 @@ for INTERVAL in INTERVALS:
         if "temp2" in out.params.keys():
             temp2 = out.params["temp2"].value
             temp2_err = out.params["temp2"].stderr
+        elif FIXTEMP2:
+            temp2 = TEMP2
+            temp2_err = TEMP2_ERR
         else:
             temp2 = None
             temp2_err = None

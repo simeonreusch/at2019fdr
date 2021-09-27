@@ -10,7 +10,7 @@ from astropy.cosmology import FlatLambdaCDM
 cosmo_generic = FlatLambdaCDM(H0=70, Om0=0.3)
 
 REDSHIFT = 0.2666
-# REDSHIFT = 0.0512
+# REDSHIFT = 0.051
 
 planck18_dist = cosmo_planck.luminosity_distance(REDSHIFT)
 generic_dist = cosmo_generic.luminosity_distance(REDSHIFT)
