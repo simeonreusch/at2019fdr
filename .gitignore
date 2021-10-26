@@ -2,3 +2,4 @@ data/P200_NIR_observations_2020_07_01/*.fits
 data/host_model/*.fits
 .DS_Store
 .python-version
+data/temp/*
