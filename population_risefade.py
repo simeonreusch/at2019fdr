@@ -20,19 +20,20 @@ from modelSED import utilities
 import matplotlib
 from ztfquery import lightcurve, alert
 from nuztf.ampel_api import ampel_api_name
+from nuztf.plot import lightcurve_from_alert
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 from astropy.cosmology import FlatLambdaCDM
 
 # Run params
 PLOT_POPULATION = True
-PLOT_LIGHTCURVES = True
+PLOT_LIGHTCURVES = False
 LOAD_LIGHTCURVES = True
 
 # Cut params
 first_detection_cut = "2018-01-01"
 
-# magcut_mag = 18.187388475116148
-magcut_mag = 19
+magcut_mag = 18.187388475116148
+# magcut_mag = 19
 
 rise_error_ratio = 1
 fade_error_ratio = 1
@@ -47,10 +48,14 @@ min_ndetections_r = 10
 
 max_negative_detections_ratio = 0.5
 
+# box_minrise = 10 * np.sqrt(2)
+# box_maxrise = 55 * np.sqrt(2)
 box_minrise = 10
-box_maxrise = 50
+box_maxrise = 55
+# box_maxrise = 100
 box_minfade = 30
 box_maxfade = 500
+
 
 peak_mag_column = "mag_peak"
 
@@ -97,258 +102,14 @@ CLASSIFICATIONS_TO_REMOVE = [
     "LBV",
 ]
 
-TYWIN_AND_LANCEL = ["ZTF19aatubsj", "ZTF19aaejtoy"]
+# HIGHLIGHTED_OBJECTS = ["ZTF19aatubsj", "ZTF19aaejtoy", "ZTF19aapreis"]
+# TYWIN_LANCEL = ["ZTF19aatubsj", "ZTF19aaejtoy"]
+HIGHLIGHTED_OBJECTS = ["ZTF19aatubsj", "ZTF19aapreis"]
+TYWIN_LANCEL = ["ZTF19aatubsj"]
+
+BRAN = ["ZTF19aapreis"]
 
 BAD_OBJECTS = ["ZTF18adaktri"]
-
-
-def lightcurve_from_alert(
-    alert: dict,
-    # figsize: list=[6.47, 4],
-    figsize: list = [8, 5],
-    title: str = None,
-    include_ulims: bool = True,
-    include_cutouts: bool = True,
-    mag_range: list = None,
-    z: float = None,
-    legend: bool = False,
-    logger=None,
-):
-    """plot AMPEL alerts as lightcurve"""
-
-    if logger is None:
-        import logging
-
-        logger = logging.getLogger(__name__)
-    else:
-        logger = logger
-
-    if z is not None:
-        if np.isnan(z):
-            z = None
-            logger.debug("Redshift is nan, will be ignored")
-
-    # ZTF color and naming scheme
-    BAND_NAMES = {1: "ZTF g", 2: "ZTF r", 3: "ZTF i"}
-    BAND_COLORS = {1: "green", 2: "red", 3: "orange"}
-
-    name = alert[0]["objectId"]
-    candidate = alert[0]["candidate"]
-    prv_candid = alert[0]["prv_candidates"]
-
-    if include_cutouts:
-        try:
-            cutouts = alert[0]["cutouts"]
-        except:
-            logger.info(
-                "The alert dictionary does not contain cutouts. Will proceed without them."
-            )
-            include_cutouts = False
-
-    logger.debug(f"Plotting {name}")
-    logger.debug(f"Found {len(prv_candid)+1} alerts")
-
-    df = pd.DataFrame(candidate, index=[0])
-    df_ulims = pd.DataFrame()
-
-    # Filter out images with negative difference flux
-    i = 0
-    for prv in prv_candid:
-        # Go through the alert history
-        if "magpsf" in prv.keys() and "isdiffpos" in prv.keys():
-            i += 1
-            ser = pd.Series(prv, name=i)
-            df = df.append(ser)
-        else:
-            df_ulims = df_ulims.append(prv, ignore_index=True)
-            i += 1
-
-    df["mjd"] = df["jd"] - 2400000.5
-    df_ulims["mjd"] = df_ulims["jd"] - 2400000.5
-
-    # Helper functions for the axis conversion (from MJD to days from today)
-    def t0_dist(obsmjd):
-        t0 = Time(time.time(), format="unix", scale="utc").mjd
-        return obsmjd - t0
-
-    def t0_to_mjd(dist_to_t0):
-        t0 = Time(time.time(), format="unix", scale="utc").mjd
-        return t0 + dist_to_t0
-
-    def mjd_to_date(mjd):
-        # return mjd + 20000
-        return Time(mjd, format="mjd").mjd
-
-    def date_to_mjd(date):
-        return Time(date, format="mjd").mjd
-
-    fig = plt.figure(figsize=figsize)
-
-    if include_cutouts:
-        lc_ax1 = fig.add_subplot(5, 4, (9, 19))
-        cutoutsci = fig.add_subplot(5, 4, (1, 5))
-        cutouttemp = fig.add_subplot(5, 4, (2, 6))
-        cutoutdiff = fig.add_subplot(5, 4, (3, 7))
-        cutoutps1 = fig.add_subplot(5, 4, (4, 8))
-    else:
-        lc_ax1 = fig.add_subplot(1, 1, 1)
-        fig.subplots_adjust(top=0.8, bottom=0.15)
-
-    plt.subplots_adjust(wspace=0.4, hspace=1.8)
-
-    #
-
-    if include_cutouts:
-        for cutout_, ax_, type_ in zip(
-            [cutouts, cutouts, cutouts],
-            [cutoutsci, cutouttemp, cutoutdiff],
-            ["Science", "Template", "Difference"],
-        ):
-            create_stamp_plot(cutouts=cutout_, ax=ax_, type=type_)
-
-        img = get_ps_stamp(
-            candidate["ra"], candidate["dec"], size=240, color=["y", "g", "i"]
-        )
-        cutoutps1.imshow(np.asarray(img))
-        cutoutps1.set_title("PS1", fontdict={"fontsize": "small"})
-        cutoutps1.set_xticks([])
-        cutoutps1.set_yticks([])
-
-    # If redshift is given, calculate absolute magnitude via luminosity distance
-    # and plot as right axis
-    if z is not None:
-
-        dist_l = GENERIC_COSMOLOGY.luminosity_distance(z).to(u.pc).value
-
-        def mag_to_absmag(mag):
-            absmag = mag - 5 * (np.log10(dist_l) - 1)
-            return absmag
-
-        def absmag_to_mag(absmag):
-            mag = absmag + 5 * (np.log10(dist_l) - 1)
-            return mag
-
-        lc_ax3 = lc_ax1.secondary_yaxis(
-            "right", functions=(mag_to_absmag, absmag_to_mag)
-        )
-
-        if not include_cutouts:
-            lc_ax3.set_ylabel(f"Absolute Magnitude [AB]")
-
-    # Give the figure a title
-    if not include_cutouts:
-        if title is None:
-            fig.suptitle(f"{name}", fontweight="bold")
-        else:
-            fig.suptitle(title, fontweight="bold")
-
-    # grid line every 100 days
-    lc_ax1.xaxis.set_major_locator(MultipleLocator(100))
-
-    lc_ax1.grid(b=True, axis="both", alpha=0.5)
-    lc_ax1.set_ylabel("Magnitude [AB]")
-
-    if not include_cutouts:
-        lc_ax1.set_xlabel("MJD")
-
-    # Determine magnitude limits
-    if mag_range is None:
-        max_mag = np.max(df.magpsf.values) + 0.3
-        min_mag = np.min(df.magpsf.values) - 0.3
-        lc_ax1.set_ylim([max_mag, min_mag])
-    else:
-        lc_ax1.set_ylim([np.max(mag_range), np.min(mag_range)])
-
-    for fid in BAND_NAMES.keys():
-
-        # Plot older datapoints
-        df_temp = df.iloc[1:].query("fid == @fid")
-        lc_ax1.errorbar(
-            df_temp["mjd"],
-            df_temp["magpsf"],
-            df_temp["sigmapsf"],
-            color=BAND_COLORS[fid],
-            fmt=".",
-            label=BAND_NAMES[fid],
-            mec="black",
-            mew=0.5,
-        )
-
-        # Plot upper limits
-        if include_ulims:
-            df_temp2 = df_ulims.query("fid == @fid")
-            lc_ax1.scatter(
-                df_temp2["mjd"],
-                df_temp2["diffmaglim"],
-                c=BAND_COLORS[fid],
-                marker="v",
-                s=1.3,
-                alpha=0.5,
-            )
-
-    # Plot datapoint from alert
-    df_temp = df.iloc[0]
-    fid = df_temp["fid"]
-    lc_ax1.errorbar(
-        df_temp["mjd"],
-        df_temp["magpsf"],
-        df_temp["sigmapsf"],
-        color=BAND_COLORS[fid],
-        fmt=".",
-        label=BAND_NAMES[fid],
-        mec="black",
-        mew=0.5,
-        markersize=12,
-    )
-
-    if legend:
-        plt.legend()
-
-    # Now we create an infobox
-    if include_cutouts:
-        info = []
-
-        info.append(name)
-        info.append("------------------------")
-        info.append(f"RA: {candidate['ra']:.8f}")
-        info.append(f"Dec: {candidate['dec']:.8f}")
-        info.append(f"rb: {candidate['rb']:.3f}")
-        info.append("------------------------")
-
-        for kk in ["sgscore", "distpsnr", "srmag"]:
-            for k in [k for k in candidate.keys() if kk in k]:
-                info.append(f"{k}: {candidate.get(k):.3f}")
-
-        fig.text(0.77, 0.55, "\n".join(info), va="top", fontsize="medium", color="0.4")
-
-    # Ugly hack because secondary_axis does not work with astropy.time.Time datetime conversion
-
-    mjd_min = np.min(df.mjd.values)
-    mjd_max = np.max(df.mjd.values)
-    length = mjd_max - mjd_min
-
-    lc_ax1.set_xlim([mjd_min - (length / 20), mjd_max + (length / 20)])
-
-    lc_ax2 = lc_ax1.twiny()
-
-    datetimes = [Time(x, format="mjd").datetime for x in [mjd_min, mjd_max]]
-
-    lc_ax2.scatter(
-        [Time(x, format="mjd").datetime for x in [mjd_min, mjd_max]], [20, 20], alpha=0
-    )
-    lc_ax2.tick_params(axis="both", which="major", labelsize=6, rotation=45)
-    lc_ax1.tick_params(axis="x", which="major", labelsize=9, rotation=45)
-    lc_ax1.tick_params(axis="y", which="major", labelsize=9)
-
-    if z is not None:
-        lc_ax3.tick_params(axis="both", which="major", labelsize=9)
-
-    if z is not None:
-        axes = [lc_ax1, lc_ax2, lc_ax3]
-    else:
-        axes = [lc_ax1, lc_ax2]
-
-    return fig, axes
 
 
 if __name__ == "__main__":
@@ -356,25 +117,30 @@ if __name__ == "__main__":
     DATA_DIR = os.path.abspath(os.path.join(CURRENT_FILE_DIR, "data"))
     PLOT_DIR = os.path.abspath(os.path.join(CURRENT_FILE_DIR, "plots"))
 
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+
     infile = os.path.join(DATA_DIR, "ZTF-I_Nuclear_Transients_extra_with_dates.csv")
 
     df = pd.read_csv(infile)
+
+    df["sigma_rise"] = df["sigma_rise"] * np.sqrt(2)
+    df["e_sigma_rise"] = df["e_sigma_rise"] * np.sqrt(2)
+
+    logger.info(f"Complete dataset: {len(df)} entries.")
+
     df = df.query("name not in @BAD_OBJECTS")
 
     first_detection_cut_jd = Time(first_detection_cut, format="isot").jd
 
     df = df.query("jd_start_hist >= @first_detection_cut_jd")
 
-    # latest_flare = np.max(df["flare_peak_jd"].values)
-    # print(latest_flare)
-    # print(Time(latest_flare, format="jd").isot)
-    # quit()
+    logger.info(f"Surviving jd_start cut: {len(df)}")
 
     # Now we massage the data a bit
-
     ireal_flare = np.repeat(True, len(df))
-    ireal_flare *= (df["offset_weighted_r"] < max_offset_weighted_r) + (
-        df["offset_weighted_g"] < max_offset_weighted_g
+    ireal_flare *= (df["offset_weighted_r"] <= max_offset_weighted_r) + (
+        df["offset_weighted_g"] <= max_offset_weighted_g
     )
     ireal_flare *= (
         df["ndetections_negative"] / df["ndetections"] < max_negative_detections_ratio
@@ -383,6 +149,17 @@ if __name__ == "__main__":
         (df["ndetections_r"] >= min_ndetections_r)
     )
     ireal_flare *= df["chi2"] != 0
+
+    df_temp = df
+    df_temp = df_temp[ireal_flare]
+    logger.info(f"Surviving quality cuts: {len(df_temp)}")
+
+    plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH / GOLDEN_RATIO))
+
+    ax1 = plt.subplot(111)
+    ax1.hist(Time(df_temp["flare_peak_jd"].values, format="jd").datetime)
+    plt.savefig("test.png")
+    quit()
 
     iclass_ok = np.repeat(True, len(df))
 
@@ -402,8 +179,8 @@ if __name__ == "__main__":
 
     isel_box = (
         isel_full
-        * (df["sigma_rise"] * np.sqrt(2) > box_minrise)
-        * (df["sigma_rise"] * np.sqrt(2) < box_maxrise)
+        * (df["sigma_rise"] > box_minrise)
+        * (df["sigma_rise"] < box_maxrise)
         * (df["sigma_fade"] > box_minfade)
         * (df["sigma_fade"] < box_maxfade)
     )
@@ -413,47 +190,87 @@ if __name__ == "__main__":
     df_box = df[isel_box]
     df_full = df[isel_full]
 
+    logger.info(f"Survive quality and classification cuts: {len(df_full)}")
+
     tywin = df.query("name == 'ZTF19aatubsj'")
     tywin_mag = tywin[peak_mag_column].values[0]
 
-    df_agn = df_full.query("qclass == 'AGN' and name != 'ZTF19aaejtoy'")
+    df_agn = df_full.query("qclass == 'AGN'")
     df_agn_flux_cut = df_agn.query(f"{peak_mag_column} <= @magcut_mag")
+    df_agn_flux_cut_box = df_agn_flux_cut.query(
+        "sigma_rise >= @box_minrise and sigma_rise <= @box_maxrise and sigma_fade >= @box_minfade and sigma_fade <= @box_maxfade"
+    )
 
     df_unknown = df_full.query("qclass == 'Unknown'")
     df_unknown_flux_cut = df_unknown.query(f"{peak_mag_column} <= @magcut_mag")
+    df_unknown_flux_cut_box = df_unknown_flux_cut.query(
+        "sigma_rise >= @box_minrise and sigma_rise <= @box_maxrise and sigma_fade >= @box_minfade and sigma_fade <= @box_maxfade"
+    )
 
     df_sn = df_full.query("qclass == 'SN'")
     df_sn_flux_cut = df_sn.query(f"{peak_mag_column} <= @magcut_mag")
+    df_sn_flux_cut_box = df_sn_flux_cut.query(
+        "sigma_rise >= @box_minrise and sigma_rise <= @box_maxrise and sigma_fade >= @box_minfade and sigma_fade <= @box_maxfade"
+    )
 
     df_tde = df_full.query("qclass == 'TDE'")
     df_tde_flux_cut = df_tde.query(f"{peak_mag_column} <= @magcut_mag")
+    df_tde_flux_cut_box = df_tde_flux_cut.query(
+        "sigma_rise >= @box_minrise and sigma_rise <= @box_maxrise and sigma_fade >= @box_minfade and sigma_fade <= @box_maxfade"
+    )
 
     df_prob_tde = df_full.query("qclass == 'lowM'")
     df_prob_tde_flux_cut = df_prob_tde.query(f"{peak_mag_column} <= @magcut_mag")
-
-    print(f"full AGN sample: {len(df_agn)}")
-    print(f"full SN sample: {len(df_sn)}")
-    print(f"full TDE sample: {len(df_tde)}")
-    print(f"full TDE? sample: {len(df_prob_tde)}")
-    print(f"full unknown sample: {len(df_unknown)}")
-    print("----------------------------------")
-    print(
-        f"objects surviving flux cut: {len(df_full.query(f'{peak_mag_column} <= @magcut_mag'))}"
+    df_prob_tde_flux_cut_box = df_prob_tde_flux_cut.query(
+        "sigma_rise >= @box_minrise and sigma_rise <= @box_maxrise and sigma_fade >= @box_minfade and sigma_fade <= @box_maxfade"
     )
-    print("----------------------------------")
-    print(f"flux cut AGN sample: {len(df_agn_flux_cut)}")
-    print(f"flux cut SN sample: {len(df_sn_flux_cut)}")
-    print(f"flux cut TDE sample: {len(df_tde_flux_cut)}")
-    print(f"flux cut TDE? sample: {len(df_prob_tde_flux_cut)}")
-    print(f"flux cut unknown sample: {len(df_unknown_flux_cut)}")
 
-    all_objects = []
+    all_surviving = (
+        len(df_agn) + len(df_tde) + len(df_prob_tde) + len(df_sn) + len(df_unknown)
+    )
 
-    dfs = [df_agn_flux_cut, df_unknown_flux_cut]
+    flux_cut_surviving = (
+        len(df_agn_flux_cut)
+        + len(df_tde_flux_cut)
+        + len(df_prob_tde_flux_cut)
+        + len(df_sn_flux_cut)
+        + len(df_unknown_flux_cut)
+    )
 
-    for df in dfs:
-        for entry in df["name"].values:
-            all_objects.append(entry)
+    box_surviving = (
+        len(df_agn_flux_cut_box)
+        + len(df_tde_flux_cut_box)
+        + len(df_prob_tde_flux_cut_box)
+        + len(df_sn_flux_cut_box)
+        + len(df_unknown_flux_cut_box)
+    )
+
+    logger.info("----------------------------------")
+    logger.info(f"objects surviving quality and classification cuts: {all_surviving}")
+    logger.info("----------------------------------")
+    logger.info(f"full AGN sample: {len(df_agn)}")
+    logger.info(f"full SN sample: {len(df_sn)}")
+    logger.info(f"full TDE sample: {len(df_tde)}")
+    logger.info(f"full TDE? sample: {len(df_prob_tde)}")
+    logger.info(f"full unknown sample: {len(df_unknown)}")
+    logger.info("----------------------------------")
+    logger.info(f"objects surviving flux cut: {flux_cut_surviving}")
+    logger.info("----------------------------------")
+    logger.info(f"flux cut AGN sample: {len(df_agn_flux_cut)}")
+    logger.info(f"flux cut SN sample: {len(df_sn_flux_cut)}")
+    logger.info(f"flux cut TDE sample: {len(df_tde_flux_cut)}")
+    logger.info(f"flux cut TDE? sample: {len(df_prob_tde_flux_cut)}")
+    logger.info(f"flux cut unknown sample: {len(df_unknown_flux_cut)}")
+    logger.info(f"flux cut ALL: {flux_cut_surviving}")
+    logger.info("----------------------------------")
+    logger.info(f"Objects in Box: {box_surviving}")
+    logger.info("----------------------------------")
+    logger.info(f"flux cut AGN sample in box: {len(df_agn_flux_cut_box)}")
+    logger.info(f"flux cut SN sample in box: {len(df_sn_flux_cut_box)}")
+    logger.info(f"flux cut TDE sample in box: {len(df_tde_flux_cut_box)}")
+    logger.info(f"flux cut TDE? sample in box: {len(df_prob_tde_flux_cut_box)}")
+    logger.info(f"flux cut unknown sample in box: {len(df_unknown_flux_cut_box)}")
+    logger.info("----------------------------------")
 
     if PLOT_POPULATION:
 
@@ -461,7 +278,7 @@ if __name__ == "__main__":
 
         ax1 = plt.subplot(111)
 
-        ax1.set_xlim(2, 2e3)
+        ax1.set_xlim(4, 2e3)
         ax1.set_ylim(3, 1e4)
         ax1.set_yscale("log")
         ax1.set_xscale("log")
@@ -481,7 +298,7 @@ if __name__ == "__main__":
                 "TDE?",
             ],
             "tywin_lancel": [
-                df_full.query("name in @TYWIN_AND_LANCEL"),
+                df_full.query("name in @TYWIN_LANCEL"),
                 "h",
                 "tab:blue",
                 "tab:blue",
@@ -490,7 +307,7 @@ if __name__ == "__main__":
                 None,
             ],
             "bran": [
-                df_full.query("name == 'ZTF19aapreis'"),
+                df_full.query("name in @BRAN"),
                 "P",
                 "tab:blue",
                 "tab:blue",
@@ -498,11 +315,31 @@ if __name__ == "__main__":
                 None,
                 None,
             ],
+            # "extra": [
+            #     df_full.query("name == 'ZTF19abzrhgq'"),
+            #     "P",
+            #     "black",
+            #     "black",
+            #     1,
+            #     20,
+            #     None,
+            # ]
         }
+
+        # check = df_full.query("name == 'ZTF19adcddzk'")
+        # print(check[["sigma_rise", "e_sigma_rise", "sigma_fade", "e_sigma_fade", peak_mag_column, "qclass"]])
+        # quit()
+
+        # remove highlighted ones so not drawn doubly
+        for entry in data:
+            if entry != "tywin_lancel" and entry != "bran":
+                data[entry][0] = data[entry][0].query(
+                    "name not in @HIGHLIGHTED_OBJECTS"
+                )
 
         for entry in data.values():
             ax1.scatter(
-                entry[0]["sigma_rise"] * np.sqrt(2),
+                entry[0]["sigma_rise"],
                 entry[0]["sigma_fade"],
                 marker=entry[1],
                 facecolors=entry[2],
@@ -511,6 +348,13 @@ if __name__ == "__main__":
                 s=entry[5],
                 label=entry[6],
             )
+
+        # df_temp_box = df_full.query(f"{peak_mag_column} <= @magcut_mag and sigma_rise >= @box_minrise and sigma_rise <= @box_maxrise and sigma_fade >= @box_minfade and sigma_fade <= @box_maxfade")
+
+        # ax1.scatter(
+        #     df_temp_box["sigma_rise"],
+        #     df_temp_box["sigma_fade"],
+        # )
 
         rect = patches.Rectangle(
             (box_minrise, box_minfade),
@@ -534,19 +378,14 @@ if __name__ == "__main__":
         )
         plt.savefig(outpath)
 
-    from ztfquery import fritz
+    df_full = df_full.replace("lowM", "TDE?")
 
     df_magcut = df_full.query(f"{peak_mag_column} <= @magcut_mag")
-
     df_box = df_magcut.query(
         "sigma_rise >= @box_minrise and sigma_rise <= @box_maxrise and sigma_fade >= @box_minfade and sigma_fade <= @box_maxfade"
     )
 
-    df_box = df_box.replace("lowM", "TDE?")
-
-    print(df_box[["name", peak_mag_column]])
-
-    print(f"In the box there are {len(df_box)} objects")
+    logger.info(f"\nIn the box there are {len(df_box)} objects")
 
     ztf_ids = df_box["name"].values
 
@@ -571,15 +410,15 @@ if __name__ == "__main__":
         if len(df_temp1) < 1:
             df_temp2 = df_full.query("name == @ztfid")
             if len(df_temp2) < 1:
-                print(f"not making the quality cuts: {ztfid}")
+                logger.info(f"not making the quality cuts: {ztfid}")
             else:
-                print(ztfid)
-                print(df_temp2[peak_mag_column])
+                logger.info(ztfid)
+                logger.info(df_temp2[peak_mag_column])
 
     if LOAD_LIGHTCURVES:
-        print(f"Downloading and plotting lightcurves")
+        logger.info(f"Downloading and plotting lightcurves")
     else:
-        print(f"Plotting lightcurves")
+        logger.info(f"Plotting lightcurves")
 
     failed_objects = []
 
@@ -587,9 +426,7 @@ if __name__ == "__main__":
     json_path = os.path.join(DATA_DIR, "sample_lightcurves")
     if not os.path.exists(outpath):
         os.makedirs(outpath)
-    outfile = os.path.join(outpath, f"box_magcut_{magcut_mag:.2f}.pdf")
-
-    # ztf_ids = ["ZTF19aapreis"]
+    outfile = os.path.join(outpath, f"box_magcut_{magcut_mag:.2f}_peculiar.pdf")
 
     names = []
     classifications = []
@@ -597,19 +434,27 @@ if __name__ == "__main__":
     peak_mags = []
     peak_absmags = []
 
+    # red = ["ZTF18acrygry", "ZTF18abjhbss", "ZTF19aafltef", "ZTF18aabicqe", "ZTF18abbuwwg", "ZTF18aabeeiz", "ZTF18abfhgug", "ZTF18aarutmj", "ZTF18aahvkxq"]
+
+    # green = ["ZTF19aarioci",  "ZTF19aaiqmgl", "ZTF19abvgxrq", "ZTF19aaejtoy", "ZTF19aaciohh", "ZTF19aamjjcx", "ZTF19aapreis", "ZTF19abzrhgq", "ZTF19abclykm", "ZTF18aanlzzf", "ZTF18aapzqup", "ZTF19aatubsj"]
+
+    three_peculiars = ["ZTF19aatubsj", "ZTF18aanlzzf", "ZTF19adcddzk"]
+
+    ztf_ids = three_peculiars
+
     with PdfPages(outfile) as pdf:
 
         for i, ztf_id in enumerate(tqdm(ztf_ids)):
             json_path_lc = os.path.join(json_path, f"{ztf_id}.json")
 
             if not os.path.isfile(json_path_lc):
-                print(f"Querying API for {ztf_id}")
+                logger.info(f"Querying API for {ztf_id}")
                 query_res = ampel_api_name(ztf_name=ztf_id, with_history=True)
                 json.dump(query_res, open(json_path_lc, "w"))
             else:
                 query_res = json.load(open(json_path_lc))
 
-            classification = df_box.query(f"name == '{ztf_id}'")["qclass"].values[0]
+            classification = df_full.query(f"name == '{ztf_id}'")["qclass"].values[0]
 
             name = ztf_id
 
@@ -631,9 +476,9 @@ if __name__ == "__main__":
             if ztf_id == "ZTF19abovsqr":
                 classification += " (BUT FROM WHERE?)"
 
-            redshift = df_box.query(f"name == '{ztf_id}'")["redshift"].values[0]
+            redshift = df_full.query(f"name == '{ztf_id}'")["redshift"].values[0]
 
-            peak_mag = df_box.query(f"name == '{ztf_id}'")[peak_mag_column].values[0]
+            peak_mag = df_full.query(f"name == '{ztf_id}'")[peak_mag_column].values[0]
 
             if not np.isnan(redshift):
                 dist_l = GENERIC_COSMOLOGY.luminosity_distance(redshift).to(u.pc).value
@@ -653,6 +498,7 @@ if __name__ == "__main__":
                 include_cutouts=False,
                 mag_range=[16, 21],
                 z=redshift,
+                grid_interval=100,
             )
 
             pdf.savefig()
@@ -671,8 +517,8 @@ if __name__ == "__main__":
     df_overview["peak_mag"] = peak_mags
     df_overview["peak_absmag"] = peak_absmags
 
-    print(df_overview)
+    logger.info(df_overview)
     outpath = os.path.join(
-        DATA_DIR, "sample_lightcurves", f"final_sample_magcut_{magcut_mag:.2f}.csv"
+        DATA_DIR, "sample_lightcurves", f"final_sample_magcut_{magcut_mag:.2f}_new.csv"
     )
     df_overview.to_csv(outpath)

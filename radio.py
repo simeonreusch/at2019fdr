@@ -26,7 +26,7 @@ def plot_radio(df):
     }
     matplotlib.rcParams.update(nice_fonts)
 
-    plt.figure(figsize=(FIG_WIDTH, 1 / 1.414 * FIG_WIDTH), dpi=DPI)
+    plt.figure(figsize=(FIG_WIDTH, FIG_WIDTH - 1), dpi=DPI)
 
     ax1 = plt.subplot(111)
 
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     FLUXPLOT = True
 
     REDSHIFT = 0.267
-    FIG_WIDTH = 6
+    FIG_WIDTH = 5
     BIG_FONTSIZE = 12
     SMALL_FONTSIZE = 12
     DPI = 400

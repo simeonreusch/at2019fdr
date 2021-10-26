@@ -15,7 +15,7 @@ from astropy.cosmology import Planck15 as cosmo
 from modelSED import utilities
 import matplotlib
 
-XRT_COLUMN = "flux0310_bb_25eV"
+XRT_COLUMN = "redone"
 nice_fonts = {
     "text.usetex": True,
     "font.family": "serif",
@@ -349,7 +349,7 @@ if __name__ == "__main__":
         "P200_sextractor+H",
         "P200_sextractor+Ks",
         # "Swift+UVW1",
-        # "Swift+UVW2",
+        "Swift+UVW2",
         # "Swift+U",
         "Swift+V",
         "Swift+B",
