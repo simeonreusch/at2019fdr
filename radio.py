@@ -35,72 +35,61 @@ def plot_radio(df):
     plt.xscale("log")
     plt.yscale("log")
 
+    ax1.set_xlim([1e0, 2e1])
+
     # ujansky = lambda flux: flux * 1e29
     # flux = lambda ujansky: ujansky / 1e29
     # ax2 = ax1.secondary_yaxis("right", functions=(ujansky, flux))
     # ax2.set_ylabel(r"F$_\nu$ [$\mu$ Jy]", fontsize=BIG_FONTSIZE)
 
-    d = cosmo.luminosity_distance(REDSHIFT)
-    d = d.to(u.cm).value
-    lumi = lambda flux: flux * 4 * np.pi * d ** 2
-    flux = lambda lumi: lumi / (4 * np.pi * d ** 2)
-    ax2 = ax1.secondary_yaxis("right", functions=(lumi, flux))
-    ax2.tick_params(axis="y", which="major", labelsize=BIG_FONTSIZE)
-    ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
+    # d = cosmo.luminosity_distance(REDSHIFT)
+    # d = d.to(u.cm).value
+    # flux_to_lumi = lambda flux: flux * 4 * np.pi * d ** 2
+    # lumi_to_flux = lambda lumi: lumi / (4 * np.pi * d ** 2)
+    # ax2 = ax1.secondary_yaxis("right", functions=(flux_to_lumi, lumi_to_flux))
+    # ax2.tick_params(axis="y", which="major", labelsize=BIG_FONTSIZE)
+    # ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
 
-    ax1.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE)
-    ax3 = ax1.secondary_xaxis("top", functions=(utilities.nu_to_ev, utilities.ev_to_nu))
-    ax3.set_xlabel("Energy [eV]", fontsize=BIG_FONTSIZE)
-    # ax1.set_ylabel(
-    #     r"F$_\nu$ [erg s$^{-1}$ cm$^{-2}$ Hz$^{-1}$] ", fontsize=BIG_FONTSIZE
-    # )
-    ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$] ", fontsize=BIG_FONTSIZE)
+    ax1.set_xlabel("Frequency [GHz]", fontsize=BIG_FONTSIZE)
 
-    colors = {0: "#42b3a5", 1: "#4083ac"}
-    formats = {0: "d", 1: "s"}
-    dates = {0: ["July 3, 2020", None, None], 1: ["September 9, 2020", None, None]}
-    df_temp = df_vla
+    # ax3 = ax1.secondary_xaxis("top", functions=(utilities.nu_to_ev, utilities.ev_to_nu))
+    # ax3.set_xlabel("Energy [eV]", fontsize=BIG_FONTSIZE)
 
-    i = 0
-    if len(df_temp) > 0:
-        for obsmjd in df_temp.obsmjd.unique():
-            k = 0
-            for band in ["3GHz", "6GHz", "10GHz"]:
-                lc_temp = df_temp.query(f"band == '{band}' and obsmjd == '{obsmjd}'")
-                if len(lc_temp) > 0:
-                    wl = filter_wl[f"VLA+{band}"]
-                    nu = utilities.lambda_to_nu(wl)
-                    # nu_ghz = nu / 1e9
-                    flux_jansky = lc_temp["fluxJy"]
-                    flux_jansky_err = lc_temp["fluxerrJy"]
-                    flux_density = flux_jansky / 1e23
-                    flux_density_err = flux_jansky_err / 1e23
-                    flux = flux_density * nu
-                    flux_err = flux_density_err * nu
-                    ax1.errorbar(
-                        x=nu,
-                        y=flux,
-                        yerr=flux_err,
-                        markersize=8,
-                        fmt=formats[i],
-                        color=colors[i],
-                        label=dates[i][k],
-                        capsize=8,
-                        fillstyle="none",
-                    )
-                    k += 1
-            i += 1
+    # ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$] ", fontsize=BIG_FONTSIZE)
+    ax1.set_ylabel(r"Flux [mJy]", fontsize=BIG_FONTSIZE)
+    ax1.tick_params(axis="both", which="both", labelsize=BIG_FONTSIZE)
+
+    config = {
+        59033: {"c": "#42b3a5", "f": "d", "date": "2020-07-03"},
+        59101: {"c": "#4083ac", "f": "s", "date": "2020-09-09"},
+    }
+
+    for obsmjd in df.obsmjd.unique():
+        temp = df.query("obsmjd == @obsmjd")
+        ax1.errorbar(
+            x=temp["band"],
+            y=temp["fluxJy"] * 1e3,
+            yerr=temp["fluxerrJy"] * 1e3,
+            markersize=8,
+            color=config[obsmjd]["c"],
+            label=config[obsmjd]["date"],
+            fmt=config[obsmjd]["f"],
+            ls="solid",
+        )
 
     # Plot limit of 0.15 mJy
+    y = 0.15
+    yerr = y / 30
+
     ax1.errorbar(
-        x=3e9,
-        xerr=0.1e9,  # [np.asarray([2.99]), np.asarray([3.01])],
-        y=150 / 1e29 * 3e9,
-        yerr=flux / 30,
+        x=3,
+        xerr=0.4,
+        y=y,
+        yerr=yerr,
         uplims=True,
         fmt=" ",
         color="tab:red",
-        label="Archival sensitivity limit",
+        label="Archival limit",
     )
 
     # bbox1 = dict(boxstyle="round", fc="1", color="#42b3a5")
@@ -126,9 +115,9 @@ def plot_radio(df):
     # )
 
     ax1.legend(fontsize=BIG_FONTSIZE, ncol=1, framealpha=1)  # , loc="lower right")
-    plt.grid(which="both", alpha=0.15)
+    # plt.grid(which="both", alpha=0.15)
     plt.tight_layout()
-    outpath = f"radio.png"
+    outpath = f"radio.pdf"
 
     plt.savefig(os.path.join(PLOT_DIR, outpath))
     plt.close()
@@ -140,7 +129,7 @@ if __name__ == "__main__":
 
     REDSHIFT = 0.267
     FIG_WIDTH = 5
-    BIG_FONTSIZE = 12
+    BIG_FONTSIZE = 14
     SMALL_FONTSIZE = 12
     DPI = 400
 
