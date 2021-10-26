@@ -1,6 +1,6 @@
 # AT2019fdr
 
-[![DOI](https://zenodo.org/badge/236213534.svg)](https://zenodo.org/badge/latestdoi/236213534)
+[![DOI](https://zenodo.org/badge/295367217.svg)](https://zenodo.org/badge/latestdoi/295367217)
 
 Collection of scripts used to analyze AT2019fdr.
 
