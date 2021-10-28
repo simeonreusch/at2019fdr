@@ -54,17 +54,17 @@ if __name__ == "__main__":
     corona["a"] = corona["a"] / 1e9
     corona["h"] = corona["h"] * 1e9
     corona_x = np.log10(corona["a"] / 1.267)
-    corona_y = np.log10(corona["a"] * corona["a"] * corona["h"] * 1.474)
+    corona_y = np.log10(corona["a"] * corona["a"] * corona["h"] * 1.474 / 3)
 
     wind["a"] = wind["a"] / 1e9
     wind["h"] = wind["h"] * 1e9
     wind_x = np.log10(wind["a"] / 1.267)
-    wind_y = np.log10(wind["a"] * wind["a"] * wind["h"] * 55.38)
+    wind_y = np.log10(wind["a"] * wind["a"] * wind["h"] * 55.38 / 3)
 
     ax1.plot(
         jetted["log10_e_nu"],
         jetted["log10_F"],
-        label=r"Relativistic jet ($\mu$ only)",
+        label=r"Relativistic jet",
         linestyle="dashdot",
     )
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     ax1.set_xlabel(r"log$_{10}~E_{\nu}$ [GeV]", fontsize=BIG_FONTSIZE)
     ax1.set_ylabel(
-        r"log$_{10}~E_{\nu}^2 ~\mathcal{F}_\nu$ [GeV/cm$^2$]", fontsize=BIG_FONTSIZE
+        r"log$_{10}~E_{\nu}^2 ~\mathcal{F}_\mu$ [GeV/cm$^2$]", fontsize=BIG_FONTSIZE
     )
 
     # ax1.arrow(IC200530A_ENERGY, -3.5, 0, 0.7, width=0.01, color="black")

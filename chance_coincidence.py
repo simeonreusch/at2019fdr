@@ -4,7 +4,7 @@
 import scipy.stats
 import numpy as np
 
-N_nu = 2  # number of neutrinos
+N_nu = 1  # number of neutrinos
 N_flare = 12  # Tywin-like events
 
 flare_duration = 1  # yr (typical)

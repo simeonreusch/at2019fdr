@@ -338,7 +338,7 @@ if __name__ == "__main__":
         yerr=df_wise_w1.flux_err,
         color=cmap["WISE+W1"],
         marker=markers["WISE"],
-        markersize=4,
+        markersize=7,
         linestyle=" ",
         label=filterlabel["WISE+W1"],
     )
@@ -359,7 +359,7 @@ if __name__ == "__main__":
         dustmodel_dict["convolution"],
         color="black",
         ls="dotted",
-        lw=1,
+        lw=1.8,
     )
 
     lc_ax1.set_xlim([58570, 59460])
@@ -371,12 +371,10 @@ if __name__ == "__main__":
     lc_ax2 = lc_ax1.secondary_yaxis("right", functions=(lumi, flux))
     lc_ax2.tick_params(axis="y", which="major")
     lc_ax1.set_xlabel("Date [MJD]", fontsize=BIG_FONTSIZE - 2)
-    # lc_ax1.set_ylabel(
-    #     r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=BIG_FONTSIZE
-    # )
-    lc_ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg / s / cm$^2$]", fontsize=BIG_FONTSIZE)
-    # lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
-    lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg / s]", fontsize=BIG_FONTSIZE)
+    lc_ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=BIG_FONTSIZE)
+    # lc_ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=BIG_FONTSIZE)
+    lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
+    # lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}]", fontsize=BIG_FONTSIZE))
     lc_ax1.grid(which="both", b=True, axis="both", alpha=0.2)
     t_neutrino = Time("2020-05-30T07:54:29.43", format="isot", scale="utc")
     lc_ax1.axvline(

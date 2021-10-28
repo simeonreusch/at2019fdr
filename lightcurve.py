@@ -15,7 +15,7 @@ from astropy.cosmology import Planck15 as cosmo
 from modelSED import utilities
 import matplotlib
 
-XRT_COLUMN = "redone"
+XRT_COLUMN = "bb"
 nice_fonts = {
     "text.usetex": True,
     "font.family": "serif",
@@ -54,16 +54,34 @@ def convert_mJy_to_abmag(df):
 
 def plot_lightcurve(df, fluxplot=False):
     """ """
-    plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH / GOLDEN_RATIO))
+    fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH / GOLDEN_RATIO))
+
+    print(cmap)
+
+    config = {
+        "P48+ZTF_g": {"s": 3, "fmt": "o", "a": 0.5, "c": "g"},
+        "P48+ZTF_r": {"s": 3, "fmt": "o", "a": 0.5, "c": "r"},
+        "P48+ZTF_i": {"s": 3, "fmt": "o", "a": 0.5, "c": "orange"},
+        "Swift+U": {"s": 3, "fmt": "D", "a": 1, "c": "purple"},
+        "WISE+W1": {"s": 6, "fmt": "p", "a": 1, "c": "tab:blue"},
+        "WISE+W2": {"s": 6, "fmt": "p", "a": 1, "c": "tab:red"},
+        "P200+J": {"s": 5, "fmt": "s", "a": 1, "c": "black"},
+        "P200+H": {"s": 5, "fmt": "s", "a": 1, "c": "gray"},
+        "P200+Ks": {"s": 5, "fmt": "s", "a": 1, "c": "blue"},
+        "Swift+UVW1": {"s": 3, "fmt": "D", "a": 1, "c": "orchid"},
+    }
+
+    plt.subplots_adjust(bottom=0.12, top=0.85, left=0.11, right=0.9)
     # plt.figure(dpi=DPI, figsize=(FIG_WIDTH, 2.5))
     filter_wl = utilities.load_info_json("filter_wl")
-    ax1 = plt.subplot(111)
+    # ax1 = plt.subplot(111)
+    ax1 = fig.add_subplot(14, 1, (2, 14))
 
     ax1.set_xlim([58580, 59480])
 
     if fluxplot:
         plt.yscale("log")
-        ax1.set_ylim([4e-14, 2e-12])
+        ax1.set_ylim([4e-14, 4.5e-12])
 
     for instrband in cmap:
         telescope, band = instrband.split("+")
@@ -72,6 +90,7 @@ def plot_lightcurve(df, fluxplot=False):
         else:
             fmt = "."
         if instrband not in BANDS_TO_EXCLUDE:
+            print(instrband)
             lc = df.query(f"telescope == '{telescope}' and band == '{band}'")
             if not fluxplot:
                 y = lc.mag
@@ -91,15 +110,29 @@ def plot_lightcurve(df, fluxplot=False):
                 )
                 y = flux
                 yerr = flux_err
-            ax1.errorbar(
-                x=lc.obsmjd,
-                y=y,
-                yerr=yerr,
-                color=cmap[instrband],
-                marker=fmt,
-                linestyle=" ",
-                label=filterlabel[instrband],
-            )
+
+            if instrband in [
+                "P48+ZTF_g",
+                "P48+ZTF_r",
+                "P48+ZTF_i",
+                "WISE+W1",
+                "WISE+W2",
+                "P200+H",
+                "P200+Ks",
+                "P200+J",
+                "Swift+UVW1",
+            ]:
+                ax1.errorbar(
+                    x=lc.obsmjd,
+                    y=y,
+                    yerr=yerr,
+                    color=cmap[instrband],
+                    marker=config[instrband]["fmt"],
+                    ms=config[instrband]["s"],
+                    alpha=config[instrband]["a"],
+                    linestyle=" ",
+                    label=filterlabel[instrband],
+                )
     if fluxplot:
         y = df_swift_xrt[XRT_COLUMN]
         yerr = df_swift_xrt[XRT_COLUMN] / 10
@@ -110,11 +143,22 @@ def plot_lightcurve(df, fluxplot=False):
             uplims=True,
             fmt=fmt,
             color="darkviolet",
-            label="Swift XRT",
+            label=r"$\textit{Swift}$ XRT",
         )
 
         y = df_fermi["flux"]
         yerr = df_fermi["flux"] / 10
+
+        ax1.errorbar(
+            x=59294,
+            y=5.9e-14,
+            yerr=5.9e-14,
+            fmt="s",
+            ms=6,
+            color="darkcyan",
+            label=r"$\textit{SRG}$ eROSITA",
+        )
+
         ax1.errorbar(
             x=df_fermi.obsmjd,
             xerr=df_fermi.obsmjd - df_fermi.obsmjd_start,
@@ -123,7 +167,7 @@ def plot_lightcurve(df, fluxplot=False):
             uplims=True,
             fmt=" ",
             color="turquoise",
-            label="Fermi LAT",
+            label=r"$\textit{Fermi}$ LAT",
         )
 
     if not fluxplot:
@@ -148,28 +192,42 @@ def plot_lightcurve(df, fluxplot=False):
 
     t_neutrino = Time("2020-05-30T07:54:29.43", format="isot", scale="utc")
 
-    ax1.axvline(t_neutrino.mjd, linestyle=":", label="IC200530A")
+    ax1.axvline(t_neutrino.mjd, linestyle=":", label="IC200530A", color="tab:red")
 
-    loc_upper = (0.05, 0.65)
-    loc_lower = (0.09, 0.009)
+    loc = (0.75, 0.75)
 
-    ax1.legend(fontsize=SMALL_FONTSIZE, ncol=2, framealpha=1, loc=loc_lower)
+    # ax1.legend(fontsize=SMALL_FONTSIZE, ncol=2, framealpha=1, loc=loc)
 
-    for interval in MJD_INTERVALS:
-        ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray")
+    ax1.legend(
+        ncol=6,
+        bbox_to_anchor=[1.105, 1.26],
+        fancybox=True,
+        shadow=False,
+        fontsize=10,
+        edgecolor="gray",
+    )
+
+    ax1.text(
+        t_neutrino.mjd - 94,
+        2.25e-12,
+        "Neutrino",
+        # rotation="vertical",
+        # bbox=bbox,
+        fontsize=BIG_FONTSIZE - 2,
+        color="tab:red",
+    )
+
+    # for interval in MJD_INTERVALS:
+    #     ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray")
 
     sns.despine(top=False, right=False)
-    plt.tight_layout()
+    # plt.tight_layout()
     if not fluxplot:
-        outfile_png = "lightcurve_mag.png"
         outfile_pdf = "lightcurve_mag.pdf"
     else:
-        outfile_png = "lightcurve_flux.png"
         outfile_pdf = "lightcurve_flux.pdf"
 
-    outfile_png = os.path.join(PLOT_DIR, outfile_png)
     outfile_pdf = os.path.join(PLOT_DIR, outfile_pdf)
-    plt.savefig(outfile_png)
     plt.savefig(outfile_pdf)
 
     percent_forced = (
@@ -274,9 +332,13 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
     y = flux
 
     xerr = [np.asarray([x - 0.1e9]), np.asarray([x + 700e9])]
+
     ax1.errorbar(
-        x=x,
-        xerr=xerr,
+        x=df_fermi["obsmjd"].values[0],
+        xerr=[
+            np.asarray([df_fermi["obsmjd"].values[0] - 199.5]),
+            np.asarray([df_fermi["obsmjd"].values[0] + 199.5]),
+        ],
         y=y,
         yerr=flux / 3,
         uplims=True,
@@ -427,13 +489,15 @@ if __name__ == "__main__":
     cmap = utilities.load_info_json("cmap")
     filterlabel = utilities.load_info_json("filterlabel")
 
-    plot_lightcurve(df=df)
+    # plot_lightcurve(df=df)
     plot_lightcurve(df=df, fluxplot=True)
 
-    # titles = ["sed_1_peak", "sed_2_P200_epoch1", "sed_3_P200_epoch2", "sed_4_P200_epoch3"]
-    titles = ["sed_1_peak", "sed_2_P200_epoch1", "sed_3_P200_epoch2"]
-    for i, interval in enumerate(MJD_INTERVALS):
-        plot_sed(interval, title=titles[i])
+    # # titles = ["sed_1_peak", "sed_2_P200_epoch1", "sed_3_P200_epoch2", "sed_4_P200_epoch3"]
+
+    # titles = ["sed_1_peak", "sed_2_P200_epoch1", "sed_3_P200_epoch2"]
+
+    # for i, interval in enumerate(MJD_INTERVALS):
+    #     plot_sed(interval, title=titles[i])
 
     # Save lightcurve for further use
 
