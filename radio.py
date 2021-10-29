@@ -60,16 +60,20 @@ def plot_radio(df):
     ax1.tick_params(axis="both", which="both", labelsize=BIG_FONTSIZE)
 
     config = {
-        59033: {"c": "#42b3a5", "f": "d", "date": "2020-07-03"},
-        59101: {"c": "#4083ac", "f": "s", "date": "2020-09-09"},
+        # 59033: {"c": "#42b3a5", "f": "d", "date": "2020-07-03"},
+        # 59105: {"c": "#4083ac", "f": "s", "date": "2020-09-13"},
+        # 59160: {"c": "tab:red", "f": "p", "date": "2020-11-07"},
+        59033: {"c": "#24a885", "f": "d", "date": "2020-07-03"},
+        59105: {"c": "#197aa1", "f": "s", "date": "2020-09-13"},
+        59160: {"c": "#46469f", "f": "p", "date": "2020-11-07"},
     }
 
     for obsmjd in df.obsmjd.unique():
         temp = df.query("obsmjd == @obsmjd")
         ax1.errorbar(
             x=temp["band"],
-            y=temp["fluxJy"] * 1e3,
-            yerr=temp["fluxerrJy"] * 1e3,
+            y=temp["flux_muJy"] / 1e3,
+            yerr=temp["fluxerr_muJy"] / 1e3,
             markersize=8,
             color=config[obsmjd]["c"],
             label=config[obsmjd]["date"],
@@ -79,7 +83,7 @@ def plot_radio(df):
 
     # Plot limit of 0.15 mJy
     y = 0.15
-    yerr = y / 30
+    yerr = y / 10
 
     ax1.errorbar(
         x=3,
@@ -91,6 +95,7 @@ def plot_radio(df):
         color="tab:red",
         label="Archival limit",
     )
+    ax1.grid(color="gray", alpha=0.1, axis="both", which="both")
 
     # bbox1 = dict(boxstyle="round", fc="1", color="#42b3a5")
     # bbox2 = dict(boxstyle="round", fc="1", color="#4083ac")
@@ -114,7 +119,9 @@ def plot_radio(df):
     #     color="#4083ac",
     # )
 
-    ax1.legend(fontsize=BIG_FONTSIZE, ncol=1, framealpha=1)  # , loc="lower right")
+    ax1.legend(
+        fontsize=BIG_FONTSIZE - 0.5, ncol=1, framealpha=1
+    )  # , loc="lower right")
     # plt.grid(which="both", alpha=0.15)
     plt.tight_layout()
     outpath = f"radio.pdf"

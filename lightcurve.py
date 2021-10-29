@@ -46,7 +46,6 @@ def convert_mJy_to_abmag(df):
     fnu = df["fnu_mJy"] / 1000 * 1e-23
     fnu_err = df["fnu_mJy_err"] / 1000 * 1e-23
     df["mag"] = utilities.flux_to_abmag(fnu)
-    print(df.mag)
     df["mag_err"] = utilities.flux_err_to_abmag_err(fnu, fnu_err)
     df.drop(columns=["fnu_mJy", "fnu_mJy_err"], inplace=True)
     return df
@@ -55,8 +54,6 @@ def convert_mJy_to_abmag(df):
 def plot_lightcurve(df, fluxplot=False):
     """ """
     fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH / GOLDEN_RATIO))
-
-    print(cmap)
 
     config = {
         "P48+ZTF_g": {"s": 3, "fmt": "o", "a": 0.5, "c": "g"},
@@ -81,7 +78,7 @@ def plot_lightcurve(df, fluxplot=False):
 
     if fluxplot:
         plt.yscale("log")
-        ax1.set_ylim([4e-14, 4.5e-12])
+        ax1.set_ylim([1e-14, 2e-12])
 
     for instrband in cmap:
         telescope, band = instrband.split("+")
@@ -90,7 +87,6 @@ def plot_lightcurve(df, fluxplot=False):
         else:
             fmt = "."
         if instrband not in BANDS_TO_EXCLUDE:
-            print(instrband)
             lc = df.query(f"telescope == '{telescope}' and band == '{band}'")
             if not fluxplot:
                 y = lc.mag
@@ -146,22 +142,39 @@ def plot_lightcurve(df, fluxplot=False):
             label=r"$\textit{Swift}$ XRT",
         )
 
-        y = df_fermi["flux"]
-        yerr = df_fermi["flux"] / 10
-
         ax1.errorbar(
             x=59294,
             y=5.9e-14,
-            yerr=5.9e-14,
-            fmt="s",
+            yerr=5.9e-14 / 10,
+            fmt="D",
             ms=6,
             color="darkcyan",
             label=r"$\textit{SRG}$ eROSITA",
         )
 
+        df_erosita_ulims = pd.read_csv(os.path.join(LC_DIR, "erosita_ulims.csv"))
+        y = df_erosita_ulims.flux
+        yerr = y / 10
+
         ax1.errorbar(
-            x=df_fermi.obsmjd,
-            xerr=df_fermi.obsmjd - df_fermi.obsmjd_start,
+            x=df_erosita_ulims.obsmjd,
+            xerr=df_erosita_ulims.obsmjd - df_erosita_ulims.obsmjd_start,
+            y=df_erosita_ulims.flux,
+            yerr=yerr,
+            uplims=True,
+            fmt="D",
+            ms=3,
+            color="darkcyan",
+            # label=r"$\textit{SRG}$ eROSITA",
+        )
+
+        df_fermi_cut = df_fermi.query("obsmjd == 58799.5")
+        y = df_fermi_cut["flux"]
+        yerr = df_fermi_cut["flux"] / 10
+
+        ax1.errorbar(
+            x=df_fermi_cut.obsmjd,
+            xerr=df_fermi_cut.obsmjd - df_fermi_cut.obsmjd_start,
             y=y,
             yerr=yerr,
             uplims=True,
@@ -209,7 +222,7 @@ def plot_lightcurve(df, fluxplot=False):
 
     ax1.text(
         t_neutrino.mjd - 94,
-        2.25e-12,
+        5e-14,
         "Neutrino",
         # rotation="vertical",
         # bbox=bbox,
