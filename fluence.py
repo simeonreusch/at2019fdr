@@ -61,6 +61,22 @@ if __name__ == "__main__":
     wind_x = np.log10(wind["a"] / 1.267)
     wind_y = np.log10(wind["a"] * wind["a"] * wind["h"] * 55.38 / 3)
 
+    df1 = pd.DataFrame()
+    df1["log10E_GeV"] = wind_x
+    df1["fluence_GeV"] = wind_y
+
+    df2 = pd.DataFrame()
+    df2["log10E_GeV"] = corona_x
+    df2["fluence_GeV"] = corona_y
+
+    df3 = pd.DataFrame()
+    df3["log10E_GeV"] = jetted["log10_e_nu"]
+    df3["fluence_GeV"] = jetted["log10_F"]
+
+    df1.to_csv(os.path.join(DATA_DIR, "wind.csv"))
+    df2.to_csv(os.path.join(DATA_DIR, "corona.csv"))
+    df3.to_csv(os.path.join(DATA_DIR, "jet.csv"))
+
     ax1.plot(
         jetted["log10_e_nu"],
         jetted["log10_F"],

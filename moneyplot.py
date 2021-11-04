@@ -19,8 +19,10 @@ import matplotlib
 
 pd.options.mode.chained_assignment = None
 
+flabel_sel = "filterlabel_with_wl"
+
 cmap = utilities.load_info_json("cmap")
-filterlabel = utilities.load_info_json("filterlabel")
+filterlabel = utilities.load_info_json(flabel_sel)
 filter_wl = utilities.load_info_json("filter_wl")
 wl_filter = {v: k for k, v in filter_wl.items()}
 
@@ -155,7 +157,7 @@ def create_sed(ax, epoch):
     ax.text(
         0.6e14,
         1.35e-12,
-        f"L = {total_luminosity:.1e}",
+        rf"L = {total_luminosity.value:.1e} erg/s",
         bbox=bbox,
         fontsize=SMALL_FONTSIZE,
     )
@@ -226,13 +228,20 @@ def create_sed(ax, epoch):
             markersize=markersizes[telescope],
         )
 
+    if flabel_sel == "filterlabel":
+        legendpos = (2.32, 1.58)
+        fontsize = 9
+    else:
+        legendpos = (2.5, 1.58)
+        fontsize = 8
+
     if epoch == 1:
         ax.legend(
             ncol=6,
-            bbox_to_anchor=(2.32, 1.58),
+            bbox_to_anchor=legendpos,
             fancybox=True,
             shadow=False,
-            fontsize=9,
+            fontsize=fontsize,
             edgecolor="gray",
         )
         ax.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE - 2)
@@ -287,6 +296,7 @@ if __name__ == "__main__":
 
     df_ztf_g = df.query("telescope == 'P48' and band == 'ZTF_g'")
     df_wise_w1 = df.query("telescope == 'WISE' and band == 'W1'")
+    df_wise_w2 = df.query("telescope == 'WISE' and band == 'W2'")
     df_p200 = df.query("telescope == 'P200' and band == 'Ks'")
 
     with open(infile_dustmodel) as f:
@@ -342,6 +352,17 @@ if __name__ == "__main__":
         linestyle=" ",
         label=filterlabel["WISE+W1"],
     )
+
+    # lc_ax1.errorbar(
+    #     x=df_wise_w2.obsmjd,
+    #     y=df_wise_w2.flux,
+    #     yerr=df_wise_w1.flux_err,
+    #     color=cmap["WISE+W2"],
+    #     marker=markers["WISE"],
+    #     markersize=7,
+    #     linestyle=" ",
+    #     label=filterlabel["WISE+W2"],
+    # )
 
     lc_ax1.errorbar(
         x=df_p200.obsmjd,
@@ -456,7 +477,5 @@ if __name__ == "__main__":
         for polygon in [polygon1, polygon2]:
             fig.add_artist(polygon)
 
-    outfile_png = os.path.join(PLOT_DIR, "lightcurve_and_sed.png")
     outfile_pdf = os.path.join(PLOT_DIR, "lightcurve_and_sed.pdf")
-    fig.savefig(outfile_png)
     fig.savefig(outfile_pdf)

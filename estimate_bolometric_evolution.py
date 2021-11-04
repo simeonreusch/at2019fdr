@@ -13,7 +13,6 @@ from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from matplotlib.ticker import ScalarFormatter
 from modelSED import utilities
-from ztffps import connectors
 from astroquery.ned import Ned
 from scipy.interpolate import interp1d, UnivariateSpline
 from scipy.signal import savgol_filter
@@ -170,7 +169,7 @@ obsmjd_lumi = np.insert(obsmjd_lumi, [0, 3], [MJD_START, MJD_END])
 total_luminosities = np.insert(total_luminosities, [0, 3], [0, 0])
 infrared_luminositites = np.insert(infrared_luminosities, [0, 3], [0, 0])
 
-lc_infile = os.path.join(DATADIR, "full_lightcurve_final.csv")
+lc_infile = os.path.join(DATADIR, "full_lightcurve.csv")
 lc = pd.read_csv(lc_infile)
 lc_g = lc.query("telescope == 'P48' and band == 'ZTF_g'")
 lc_g = lc_g.sort_values(by=["obsmjd"])

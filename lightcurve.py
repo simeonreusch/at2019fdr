@@ -15,7 +15,8 @@ from astropy.cosmology import Planck15 as cosmo
 from modelSED import utilities
 import matplotlib
 
-XRT_COLUMN = "bb"
+flabel_sel = "filterlabel_with_wl"
+
 nice_fonts = {
     "text.usetex": True,
     "font.family": "serif",
@@ -66,6 +67,7 @@ def plot_lightcurve(df, fluxplot=False):
         "P200+H": {"s": 5, "fmt": "s", "a": 1, "c": "gray"},
         "P200+Ks": {"s": 5, "fmt": "s", "a": 1, "c": "blue"},
         "Swift+UVW1": {"s": 3, "fmt": "D", "a": 1, "c": "orchid"},
+        "Swift+UVW2": {"s": 3, "fmt": "D", "a": 1, "c": "m"},
     }
 
     plt.subplots_adjust(bottom=0.12, top=0.85, left=0.11, right=0.9)
@@ -86,7 +88,9 @@ def plot_lightcurve(df, fluxplot=False):
             fmt = "*"
         else:
             fmt = "."
+
         if instrband not in BANDS_TO_EXCLUDE:
+
             lc = df.query(f"telescope == '{telescope}' and band == '{band}'")
             if not fluxplot:
                 y = lc.mag
@@ -117,6 +121,7 @@ def plot_lightcurve(df, fluxplot=False):
                 "P200+Ks",
                 "P200+J",
                 "Swift+UVW1",
+                # "Swift+UVW2",
             ]:
                 ax1.errorbar(
                     x=lc.obsmjd,
@@ -130,26 +135,38 @@ def plot_lightcurve(df, fluxplot=False):
                     label=filterlabel[instrband],
                 )
     if fluxplot:
-        y = df_swift_xrt[XRT_COLUMN]
-        yerr = df_swift_xrt[XRT_COLUMN] / 10
+
+        if flabel_sel == "filterlabel_with_wl":
+            label = "XRT (0.3-10 keV)"
+        else:
+            label = "Swift XRT"
+
+        y = df_swift_xrt["flux_unabsorbed"]
+        yerr = df_swift_xrt["flux_unabsorbed"] / 10
         ax1.errorbar(
             x=df_swift_xrt.obsmjd,
+            xerr=df_swift_xrt.range,
             y=y,
             yerr=yerr,
             uplims=True,
             fmt=fmt,
             color="darkviolet",
-            label=r"$\textit{Swift}$ XRT",
+            label=label,
         )
 
+        if flabel_sel == "filterlabel_with_wl":
+            label = "eROSITA (0.3-2 keV)"
+        else:
+            label = "SRG eROSITA"
+
         ax1.errorbar(
-            x=59294,
-            y=5.9e-14,
-            yerr=5.9e-14 / 10,
+            x=59283.685482,
+            y=6.2e-14,
+            yerr=[[2.7e-14], [2.1e-14]],
             fmt="D",
             ms=6,
             color="darkcyan",
-            label=r"$\textit{SRG}$ eROSITA",
+            label=label,
         )
 
         df_erosita_ulims = pd.read_csv(os.path.join(LC_DIR, "erosita_ulims.csv"))
@@ -165,12 +182,16 @@ def plot_lightcurve(df, fluxplot=False):
             fmt="D",
             ms=3,
             color="darkcyan",
-            # label=r"$\textit{SRG}$ eROSITA",
         )
 
         df_fermi_cut = df_fermi.query("obsmjd == 58799.5")
         y = df_fermi_cut["flux"]
         yerr = df_fermi_cut["flux"] / 10
+
+        if flabel_sel == "filterlabel":
+            label = "Fermi LAT"
+        else:
+            label = "LAT (0.1-800 GeV)"
 
         ax1.errorbar(
             x=df_fermi_cut.obsmjd,
@@ -180,7 +201,7 @@ def plot_lightcurve(df, fluxplot=False):
             uplims=True,
             fmt=" ",
             color="turquoise",
-            label=r"$\textit{Fermi}$ LAT",
+            label=label,
         )
 
     if not fluxplot:
@@ -209,14 +230,23 @@ def plot_lightcurve(df, fluxplot=False):
 
     loc = (0.75, 0.75)
 
-    # ax1.legend(fontsize=SMALL_FONTSIZE, ncol=2, framealpha=1, loc=loc)
+    if flabel_sel == "filterlabel":
+        bbox = [1.105, 1.26]
+        fontsize = 10
+    else:
+        bbox = [1.13, 1.26]
+        fontsize = 9.8
 
+    if flabel_sel == "filterlabel":
+        ncol = 6
+    else:
+        ncol = 5
     ax1.legend(
-        ncol=6,
-        bbox_to_anchor=[1.105, 1.26],
+        ncol=ncol,
+        bbox_to_anchor=bbox,
         fancybox=True,
         shadow=False,
-        fontsize=10,
+        fontsize=fontsize,
         edgecolor="gray",
     )
 
@@ -321,11 +351,17 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
             )
 
     lc = df_swift_xrt.query(f"obsmjd >= {mjd_bounds[0]} and obsmjd <= {mjd_bounds[1]}")
-    flux = np.median(lc[XRT_COLUMN].values)
+    flux = np.median(lc["flux_unabsorbed"].values)
     x = nu_to_ev(utilities.lambda_to_nu(filter_wl["Swift+XRT"]))
     y = flux
 
     xerr = [np.asarray([x - 0.1e3]), np.asarray([x + 10e3])]
+
+    if flabel_sel == "filterlabel_with_wl":
+        label = "XRT (0.3-10 keV)"
+    else:
+        label = "Swift XRT"
+
     ax1.errorbar(
         x=x,
         xerr=xerr,
@@ -334,7 +370,7 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
         uplims=True,
         fmt=" ",
         color="darkviolet",
-        label="Swift XRT",
+        label=label,
     )
 
     lc = df_fermi.query(
@@ -359,32 +395,6 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
         color="turquoise",
         label="Fermi LAT",
     )
-
-    # colors = {"10GHz": "magenta", "3GHz": "maroon", "6GHz": "peru"}
-    # df_temp = df_vla.query(f"obsmjd >= {mjd_bounds[0]} and obsmjd <= {mjd_bounds[1]}")
-
-    # if len(df_temp) > 0:
-    #     for band in ["3GHz", "6GHz", "10GHz"]:
-    #         lc_temp = df_temp.query(f"band == '{band}'")
-    #         if len(lc_temp) > 0:
-    #             wl = filter_wl[f"VLA+{band}"]
-    #             flux_density = lc_temp["flux"]
-    #             flux_density_err = lc_temp["fluxerr"]
-    #             flux, flux_err = utilities.flux_density_to_flux(
-    #                 wl, flux_density, flux_density_err
-    #             )
-    #             x = nu_to_ev(utilities.lambda_to_nu(wl))
-    #             y = flux
-    #             yerr = flux_err
-    #             ax1.errorbar(
-    #                 x=x,
-    #                 y=y,
-    #                 yerr=yerr,
-    #                 markersize=10,
-    #                 fmt=".",
-    #                 color=colors[band],
-    #                 label="VLA " + band,
-    #             )
 
     ax1.tick_params(axis="both", which="major", labelsize=SMALL_FONTSIZE)
     ax2.tick_params(axis="both", which="major", labelsize=SMALL_FONTSIZE)
@@ -424,36 +434,17 @@ if __name__ == "__main__":
         "P200_sextractor+H",
         "P200_sextractor+Ks",
         # "Swift+UVW1",
-        "Swift+UVW2",
+        # "Swift+UVW2",
         # "Swift+U",
         "Swift+V",
         "Swift+B",
     ]
 
-    # BANDS_TO_EXCLUDE = [
-    #     "P200_sextractor+J",
-    #     "P200_sextractor+H",
-    #     "P200_sextractor+Ks",
-    #     "Swift+UVW1",
-    #     "Swift+UVW2",
-    #     "Swift+U",
-    #     "Swift+V",
-    #     "Swift+B",
-    #     "WISE+W1",
-    #     "WISE+W2",
-    #     "P48+ZTF_i",
-    #     "P48+ZTF_r",
-    #     "Swift+UVM2",
-    #     "P200+J",
-    #     "P200+Ks",
-    #     "P200+H"
-    # ]
-
     infile_swift = os.path.join(LC_DIR, "swift_subtracted_synthetic.csv")
     infile_p200 = os.path.join(LC_DIR, "p200_subtracted_synthetic.csv")
     infile_ztf_forced = os.path.join(LC_DIR, "ZTF19aatubsj_SNT_5.0.csv")
     infile_ztf_alert = os.path.join(LC_DIR, "ZTF19aatubsj_alert.csv")
-    infile_swift_xrt = os.path.join(LC_DIR, "swift_xrt_ulims.csv")
+    infile_swift_xrt = os.path.join(LC_DIR, "swift_xrt_ulims_binned.csv")
     infile_fermi = os.path.join(LC_DIR, "fermi_ulims.csv")
     infile_vla = os.path.join(LC_DIR, "vla.csv")
     infile_wise = os.path.join(LC_DIR, "wise_subtracted_baseline.csv")
@@ -500,7 +491,7 @@ if __name__ == "__main__":
     df.drop(columns=["Unnamed: 0"], inplace=True)
 
     cmap = utilities.load_info_json("cmap")
-    filterlabel = utilities.load_info_json("filterlabel")
+    filterlabel = utilities.load_info_json(flabel_sel)
 
     # plot_lightcurve(df=df)
     plot_lightcurve(df=df, fluxplot=True)
