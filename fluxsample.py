@@ -10,6 +10,8 @@ from astropy import units as u
 from astropy.cosmology import Planck18 as cosmo_planck
 from astropy.cosmology import FlatLambdaCDM
 
+from modelSED import utilities
+
 from nuztf.ampel_api import ampel_api_name
 
 infile = os.path.join("data", "fluxsample.csv")
@@ -50,10 +52,19 @@ outfile = os.path.join("data", "fluxsample_extended.csv")
 # df.to_csv(outfile)
 
 df = pd.read_csv(outfile)
+df = df.drop(columns=["Unnamed: 0"])
 
-# df = df.query("type != 'Nuclear'")
+# df = df.query("type == 'Baratheon' or ztfid == 'ZTF19aatubsj'")
+# df = df.query("in_chance_coincidence == 'yes'")
 
-peak_g_fluxes = np.power(10, (-(df["peak_g_mag"].values) / 2.5))
+print(f"{len(df)} objects survive")
+
+
+peak_g_flux_densities = utilities.abmag_to_flux(df["peak_g_mag"].values)
+
+peak_g_fluxes = utilities.flux_density_to_flux(4722.7, peak_g_flux_densities)
+
+print(peak_g_fluxes)
 
 df["peak_g_flux"] = peak_g_fluxes
 
@@ -63,6 +74,24 @@ bran_flux = df.query("ztfid == 'ZTF19aapreis'")["peak_g_flux"].values[0]
 
 tywin_flux = df.query("ztfid == 'ZTF19aatubsj'")["peak_g_flux"].values[0]
 
+df = df.sort_values(by=["peak_g_flux"], ascending=False)
+
+df["flux_tywin_units"] = df["peak_g_flux"] / tywin_flux
+
+df_marek = df.drop(
+    columns=[
+        "redshift",
+        "duration",
+        "peakabs",
+        "peakmag",
+        "peakfilter",
+        "distnr",
+        "lumi",
+        "peak_g_mag",
+        "peak_g_flux",
+    ]
+)
+
 
 print(
     f"Bran contributes {(bran_flux/summed_flux)*100:.1f}% of population peak g-band flux."
@@ -70,3 +99,12 @@ print(
 print(
     f"Tywin contributes {(tywin_flux/summed_flux)*100:.1f}% of population peak g-band flux."
 )
+
+bla = df_marek["flux_tywin_units"].values
+
+for entry in bla:
+    print(f"{entry:.1f}")
+
+print(df_marek["flux_tywin_units"])
+
+df_marek.to_csv("fluxample_marek.csv")

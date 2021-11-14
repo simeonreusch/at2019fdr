@@ -50,22 +50,22 @@ def plot_radio(df):
     # ax2.tick_params(axis="y", which="major", labelsize=BIG_FONTSIZE)
     # ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
 
-    ax1.set_xlabel("Frequency [GHz]", fontsize=BIG_FONTSIZE)
+    ax1.set_xlabel("Frequency (GHz)", fontsize=BIG_FONTSIZE)
 
     # ax3 = ax1.secondary_xaxis("top", functions=(utilities.nu_to_ev, utilities.ev_to_nu))
     # ax3.set_xlabel("Energy [eV]", fontsize=BIG_FONTSIZE)
 
     # ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$] ", fontsize=BIG_FONTSIZE)
-    ax1.set_ylabel(r"Flux [mJy]", fontsize=BIG_FONTSIZE)
+    ax1.set_ylabel(r"Flux (mJy)", fontsize=BIG_FONTSIZE)
     ax1.tick_params(axis="both", which="both", labelsize=BIG_FONTSIZE)
 
     config = {
         # 59033: {"c": "#42b3a5", "f": "d", "date": "2020-07-03"},
         # 59105: {"c": "#4083ac", "f": "s", "date": "2020-09-13"},
         # 59160: {"c": "tab:red", "f": "p", "date": "2020-11-07"},
-        59033: {"c": "#24a885", "f": "d", "date": "2020-07-03"},
-        59105: {"c": "#197aa1", "f": "s", "date": "2020-09-13"},
-        59160: {"c": "#46469f", "f": "p", "date": "2020-11-07"},
+        59033: {"c": "#24a885", "f": "d", "date": "2020-07-03 (59033)"},
+        59105: {"c": "#197aa1", "f": "s", "date": "2020-09-13 (59105)"},
+        59160: {"c": "#46469f", "f": "p", "date": "2020-11-07 (59160)"},
     }
 
     for obsmjd in df.obsmjd.unique():
@@ -82,7 +82,7 @@ def plot_radio(df):
         )
 
     # Plot limit of 0.15 mJy
-    y = 0.15
+    y = 0.32
     yerr = y / 10
 
     ax1.errorbar(
@@ -93,35 +93,11 @@ def plot_radio(df):
         uplims=True,
         fmt=" ",
         color="tab:red",
-        label="Archival limit",
+        label="Archival limit\n2017-11-25 (58082)",
     )
     ax1.grid(color="gray", alpha=0.1, axis="both", which="both")
 
-    # bbox1 = dict(boxstyle="round", fc="1", color="#42b3a5")
-    # bbox2 = dict(boxstyle="round", fc="1", color="#4083ac")
-
-    # ax1.text(
-    #     0.03,
-    #     0.78,
-    #     "July 3, 2020",
-    #     transform=ax1.transAxes,
-    #     fontsize=BIG_FONTSIZE,
-    #     bbox=bbox1,
-    #     color="#42b3a5",
-    # )
-    # ax1.text(
-    #     0.4,
-    #     0.28,
-    #     "September 9, 2020",
-    #     transform=ax1.transAxes,
-    #     fontsize=BIG_FONTSIZE,
-    #     bbox=bbox2,
-    #     color="#4083ac",
-    # )
-
-    ax1.legend(
-        fontsize=BIG_FONTSIZE - 0.5, ncol=1, framealpha=1
-    )  # , loc="lower right")
+    ax1.legend(fontsize=BIG_FONTSIZE - 1, ncol=1, framealpha=1)  # , loc="lower right")
     # plt.grid(which="both", alpha=0.15)
     plt.tight_layout()
     outpath = f"radio.pdf"

@@ -209,12 +209,12 @@ def plot_lightcurve(df, fluxplot=False):
         ax1.set_ylabel(r"Apparent Magnitude [AB]", fontsize=BIG_FONTSIZE)
     else:
         ax1.set_ylabel(
-            r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=BIG_FONTSIZE + 1
+            r"$\nu$ F$_\nu$ (erg s$^{-1}$ cm$^{-2}$)", fontsize=BIG_FONTSIZE + 1
         )
-        ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE + 1)
+        ax2.set_ylabel(r"$\nu$ L$_\nu$ (erg s$^{-1}$)", fontsize=BIG_FONTSIZE + 1)
 
     ax1.tick_params(axis="both", which="major", labelsize=BIG_FONTSIZE)
-    ax1.set_xlabel("Date [MJD]", fontsize=BIG_FONTSIZE + 1)
+    ax1.set_xlabel("Date (MJD)", fontsize=BIG_FONTSIZE + 1)
     ax1.grid(which="both", b=True, axis="both", alpha=0.2)
     if not fluxplot:
         ax1.set_ylim([22, 16])

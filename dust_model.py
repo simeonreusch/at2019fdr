@@ -16,9 +16,9 @@ from lmfit import Model, Parameters, Minimizer, report_fit, minimize
 from astropy.cosmology import FlatLambdaCDM
 
 
-FIT = False
+FIT = True
 FITMETHOD = "lm"
-PLOT = False
+PLOT = True
 
 
 def plot_results_brute(result, best_vals=True, varlabels=None, output=None):
@@ -364,7 +364,7 @@ data = np.insert(data, 0, 0)
 # data_err = np.insert(data_err, 0, 1e-14)
 # has errors
 # data_err = np.insert(data_err, 0, 1e-13)
-data_err = np.insert(data_err, 0, 1e-15)
+data_err = np.insert(data_err, 0, 1e-16)
 
 minimizer = Minimizer(
     userfcn=minimizer_function,
@@ -482,9 +482,7 @@ if PLOT:
 
     ax.legend(loc=2)
     ax2.legend()
-    outpath_png = os.path.join(PLOT_DIR, "dust_modeling.png")
     outpath_pdf = os.path.join(PLOT_DIR, "dust_modeling.pdf")
-    fig.savefig(outpath_png)
     fig.savefig(outpath_pdf)
 
 

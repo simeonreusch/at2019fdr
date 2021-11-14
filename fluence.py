@@ -33,8 +33,8 @@ DPI = 400
 
 if __name__ == "__main__":
     CURRENT_FILE_DIR = os.path.dirname(__file__)
-    DATA_DIR = os.path.abspath(os.path.join(CURRENT_FILE_DIR, "data", "fluence"))
-    PLOT_DIR = os.path.abspath(os.path.join(CURRENT_FILE_DIR, "plots", "fluence"))
+    DATA_DIR = os.path.abspath(os.path.join(CURRENT_FILE_DIR, "data", "effective_area"))
+    PLOT_DIR = os.path.abspath(os.path.join(CURRENT_FILE_DIR, "plots"))
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -93,9 +93,9 @@ if __name__ == "__main__":
     ax1.set_xlim([2, 9])
     ax1.set_ylim([-5.5, 0])
 
-    ax1.set_xlabel(r"log$_{10}~E_{\nu}$ [GeV]", fontsize=BIG_FONTSIZE)
+    ax1.set_xlabel(r"log$_{10}~E_{\nu}$ (GeV)", fontsize=BIG_FONTSIZE)
     ax1.set_ylabel(
-        r"log$_{10}~E_{\nu}^2 ~\mathcal{F}_\mu$ [GeV/cm$^2$]", fontsize=BIG_FONTSIZE
+        r"log$_{10}~E_{\nu}^2 ~\mathcal{F}_\mu$ (GeV/cm$^2$)", fontsize=BIG_FONTSIZE
     )
 
     # ax1.arrow(IC200530A_ENERGY, -3.5, 0, 0.7, width=0.01, color="black")

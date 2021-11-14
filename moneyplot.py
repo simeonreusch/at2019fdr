@@ -19,7 +19,7 @@ import matplotlib
 
 pd.options.mode.chained_assignment = None
 
-flabel_sel = "filterlabel_with_wl"
+flabel_sel = "filterlabel"
 
 cmap = utilities.load_info_json("cmap")
 filterlabel = utilities.load_info_json(flabel_sel)
@@ -228,23 +228,47 @@ def create_sed(ax, epoch):
             markersize=markersizes[telescope],
         )
 
+    ax.errorbar(
+        1e14, 0, 1e-14, label="SRG eROSITA", fmt="D", markersize=markersizes["P200"]
+    )
+
+    df_erosita_ulims = pd.read_csv(os.path.join(LC_DIR, "erosita_ulims.csv"))
+    y = df_erosita_ulims.flux
+    yerr = y / 10
+
+    lc_ax1.errorbar(
+        x=df_erosita_ulims.obsmjd,
+        xerr=df_erosita_ulims.obsmjd - df_erosita_ulims.obsmjd_start,
+        y=df_erosita_ulims.flux,
+        yerr=yerr,
+        uplims=True,
+        fmt="D",
+        ms=3,
+        color="darkcyan",
+    )
+
     if flabel_sel == "filterlabel":
-        legendpos = (2.32, 1.58)
-        fontsize = 9
+        legendpos = (2.634, 1.58)
+        fontsize = 8.6
     else:
         legendpos = (2.5, 1.58)
         fontsize = 8
 
+    if flabel_sel == "filterlabel":
+        ncol = 7
+    else:
+        ncol = 6
+
     if epoch == 1:
         ax.legend(
-            ncol=6,
+            ncol=ncol,
             bbox_to_anchor=legendpos,
             fancybox=True,
             shadow=False,
             fontsize=fontsize,
             edgecolor="gray",
         )
-        ax.set_xlabel("Frequency [Hz]", fontsize=BIG_FONTSIZE - 2)
+        ax.set_xlabel("Frequency (Hz)", fontsize=BIG_FONTSIZE - 2)
     # ax2 = ax.secondary_xaxis(
     #     "top", functions=(utilities.nu_to_ev, utilities.ev_to_nu)
     # )
@@ -329,7 +353,9 @@ if __name__ == "__main__":
     sed3.axes.yaxis.set_ticks([])
 
     lc_ax1.set_yscale("log")
-    lc_ylim = [5e-14, 2e-12]
+    # lc_ylim = [5e-14, 2e-12]
+    lc_ylim = [1.5e-14, 2e-12]
+    # lc_ylim = [1e-14, 2e-12]
     lc_ax1.set_ylim(lc_ylim)
 
     lc_ax1.errorbar(
@@ -353,16 +379,20 @@ if __name__ == "__main__":
         label=filterlabel["WISE+W1"],
     )
 
-    # lc_ax1.errorbar(
-    #     x=df_wise_w2.obsmjd,
-    #     y=df_wise_w2.flux,
-    #     yerr=df_wise_w1.flux_err,
-    #     color=cmap["WISE+W2"],
-    #     marker=markers["WISE"],
-    #     markersize=7,
-    #     linestyle=" ",
-    #     label=filterlabel["WISE+W2"],
-    # )
+    if flabel_sel == "filterlabel_with_wl":
+        label = "eROSITA (0.3-2 keV)"
+    else:
+        label = "SRG eROSITA"
+
+    lc_ax1.errorbar(
+        x=59283.685482,
+        y=6.2e-14,
+        yerr=[[2.7e-14], [2.1e-14]],
+        fmt="D",
+        ms=6,
+        color="darkcyan",
+        label=label,
+    )
 
     lc_ax1.errorbar(
         x=df_p200.obsmjd,
@@ -383,7 +413,8 @@ if __name__ == "__main__":
         lw=1.8,
     )
 
-    lc_ax1.set_xlim([58570, 59460])
+    # lc_ax1.set_xlim([58570, 59460])
+    lc_ax1.set_xlim([58570, 59500])
 
     d = cosmo.luminosity_distance(REDSHIFT)
     d = d.to(u.cm).value
@@ -391,10 +422,10 @@ if __name__ == "__main__":
     flux = lambda lumi: lumi / (4 * np.pi * d ** 2)
     lc_ax2 = lc_ax1.secondary_yaxis("right", functions=(lumi, flux))
     lc_ax2.tick_params(axis="y", which="major")
-    lc_ax1.set_xlabel("Date [MJD]", fontsize=BIG_FONTSIZE - 2)
-    lc_ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=BIG_FONTSIZE)
+    lc_ax1.set_xlabel("Date (MJD)", fontsize=BIG_FONTSIZE - 2)
+    lc_ax1.set_ylabel(r"$\nu$ F$_\nu$ (erg s$^{-1}$ cm$^{-2}$)", fontsize=BIG_FONTSIZE)
     # lc_ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=BIG_FONTSIZE)
-    lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
+    lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ (erg s$^{-1}$)", fontsize=BIG_FONTSIZE)
     # lc_ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}]", fontsize=BIG_FONTSIZE))
     lc_ax1.grid(which="both", b=True, axis="both", alpha=0.2)
     t_neutrino = Time("2020-05-30T07:54:29.43", format="isot", scale="utc")

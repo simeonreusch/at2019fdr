@@ -27,7 +27,13 @@ IC200530A_coords = ""
 
 coords_host = SkyCoord(host_coords, unit=(u.hourangle, u.deg))
 neutrino_coords = ["255.37", "26.61"]
+neighbor_galaxy_coords = ["257.2799", "26.85423"]
+
 coords_IC200530A = SkyCoord(neutrino_coords[0], neutrino_coords[1], unit="deg")
+coords_neighbor_galaxy = SkyCoord(
+    neighbor_galaxy_coords[0], neighbor_galaxy_coords[1], unit="deg"
+)
+
 coords_g = get_coords("g")
 coords_r = get_coords("r")
 coords_i = get_coords("i")
@@ -38,9 +44,12 @@ i_sep = coords_host.separation(coords_i).arcsec
 
 g_neutrinosep = coords_IC200530A.separation(coords_g).deg
 
+g_neighborsep = coords_neighbor_galaxy.separation(coords_g).arcsec
+
 print(f"Tywin location in ZTF g-band: {coords_g}")
 
 print(f"Median offset from Host (Gaia) in ZTF g-band: {g_sep:.3f} arcsec")
 print(f"Median offset from Host (Gaia) in ZTF r-band: {r_sep:.3f} arcsec")
 print(f"Median offset from Host (Gaia) in ZTF i-band: {i_sep:.3f} arcsec")
 print(f"Median offset from IC200530A (GCN) in ZTF g-band: {g_neutrinosep:.3f} deg")
+print(f"Offfset from neighboring galaxy in ZTF g-band: {g_neighborsep:.3f} arcsec")
