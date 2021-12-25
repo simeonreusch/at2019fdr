@@ -37,39 +37,55 @@ def plot_radio(df):
 
     ax1.set_xlim([1e0, 2e1])
 
-    # ujansky = lambda flux: flux * 1e29
-    # flux = lambda ujansky: ujansky / 1e29
-    # ax2 = ax1.secondary_yaxis("right", functions=(ujansky, flux))
-    # ax2.set_ylabel(r"F$_\nu$ [$\mu$ Jy]", fontsize=BIG_FONTSIZE)
-
-    # d = cosmo.luminosity_distance(REDSHIFT)
-    # d = d.to(u.cm).value
-    # flux_to_lumi = lambda flux: flux * 4 * np.pi * d ** 2
-    # lumi_to_flux = lambda lumi: lumi / (4 * np.pi * d ** 2)
-    # ax2 = ax1.secondary_yaxis("right", functions=(flux_to_lumi, lumi_to_flux))
-    # ax2.tick_params(axis="y", which="major", labelsize=BIG_FONTSIZE)
-    # ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE)
-
     ax1.set_xlabel("Frequency (GHz)", fontsize=BIG_FONTSIZE)
 
-    # ax3 = ax1.secondary_xaxis("top", functions=(utilities.nu_to_ev, utilities.ev_to_nu))
-    # ax3.set_xlabel("Energy [eV]", fontsize=BIG_FONTSIZE)
-
-    # ax1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$] ", fontsize=BIG_FONTSIZE)
     ax1.set_ylabel(r"Flux (mJy)", fontsize=BIG_FONTSIZE)
     ax1.tick_params(axis="both", which="both", labelsize=BIG_FONTSIZE)
 
     config = {
-        # 59033: {"c": "#42b3a5", "f": "d", "date": "2020-07-03"},
-        # 59105: {"c": "#4083ac", "f": "s", "date": "2020-09-13"},
-        # 59160: {"c": "tab:red", "f": "p", "date": "2020-11-07"},
-        59033: {"c": "#24a885", "f": "d", "date": "2020-07-03 (59033)"},
-        59105: {"c": "#197aa1", "f": "s", "date": "2020-09-13 (59105)"},
-        59160: {"c": "#46469f", "f": "p", "date": "2020-11-07 (59160)"},
+        59033: {
+            "c": "#24a885",
+            "mfc": "#24a885",
+            "f": "d",
+            "date": "2020-07-03 (59033)",
+            "ls": "solid",
+        },
+        59105: {
+            "c": "#197aa1",
+            "mfc": "#197aa1",
+            "f": "s",
+            "date": "2020-09-13 (59105)",
+            "ls": "solid",
+        },
+        59160: {
+            "c": "#46469f",
+            "mfc": "white",
+            "f": "o",
+            "date": "2020-11-07 (59160)",
+            "ls": "dashed",
+        },
     }
+
+    # print(df.drop(labels=[0,1]))
+
+    for obsmjd in [59160]:
+        temp = df.query("obsmjd == @obsmjd")
+        ax1.errorbar(
+            x=temp["band"],
+            y=temp["flux_muJy"] / 1e3,
+            yerr=temp["fluxerr_muJy"] / 1e3,
+            markersize=8,
+            color=config[obsmjd]["c"],
+            # label=config[obsmjd]["date"],
+            fmt=config[obsmjd]["f"],
+            ls="dashed",
+            mfc=config[obsmjd]["mfc"],
+        )
 
     for obsmjd in df.obsmjd.unique():
         temp = df.query("obsmjd == @obsmjd")
+        if obsmjd == 59160:
+            temp = temp.drop(labels=[8, 9])
         ax1.errorbar(
             x=temp["band"],
             y=temp["flux_muJy"] / 1e3,
@@ -79,6 +95,7 @@ def plot_radio(df):
             label=config[obsmjd]["date"],
             fmt=config[obsmjd]["f"],
             ls="solid",
+            # mfc="solid",
         )
 
     # Plot limit of 0.15 mJy

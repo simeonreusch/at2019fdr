@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 import json
 from modelSED import utilities, fit, sncosmo_spectral_v13
 from modelSED.utilities import broken_powerlaw_spectrum, FNU
-from astropy.cosmology import Planck15 as cosmo
+from astropy.cosmology import FlatLambdaCDM
+
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 # from modelSED.fit import powerlaw_minimizer
 from lmfit import Model, Parameters, Minimizer, report_fit, minimize
@@ -47,9 +49,9 @@ FITDIR = os.path.join("fit", "double_blackbody")
 # GLOBAL_AV = 1.48477495
 # GLOBAL_RV = 3.93929588
 
-FITMETHOD = "lm"
+FITMETHOD = "brute"
 
-FIXTEMP2 = True
+FIXTEMP2 = False
 TEMP2 = 1722.21882
 TEMP2_ERR = 65.8643689
 
@@ -57,12 +59,14 @@ TEMP2_ERR = 65.8643689
 
 # GLOBAL_AV = 0.2662317621632567
 # GLOBAL_RV = 3.127271539497185
-GLOBAL_AV = 0.24925786
-GLOBAL_RV = 3.11712381
+# GLOBAL_AV = 0.24925786
+# GLOBAL_RV = 3.11712381
+GLOBAL_AV = 0.3643711523794127
+GLOBAL_RV = 4.2694173002543225
 
 REFIT = True
 FIT = 3
-INTERVALS = [0]
+INTERVALS = [2]
 
 
 EXTINCTIONFIT_INTERVAL = 4
@@ -158,6 +162,7 @@ def double_blackbody_minimizer(params, x, data=None, data_err=None, **kwargs):
         residual = np.asarray(ab_model_list) - np.asarray(data)
         print(residual)
         return residual
+
     elif data_err:
         residual = (np.asarray(ab_model_list) - np.asarray(data)) / np.asarray(data_err)
         print(residual)

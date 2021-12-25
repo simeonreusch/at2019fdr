@@ -39,9 +39,9 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
-    infile_jetted = os.path.join(DATA_DIR, "fluence_jetted_tywin_dbb_v2.csv")
+    infile_jetted = os.path.join(DATA_DIR, "fl_jetted_tywin_dbb_v4.csv")
     infile_corona = os.path.join(DATA_DIR, "kohta_corona.csv")
-    infile_wind = os.path.join(DATA_DIR, "kohta_wind.csv")
+    infile_wind = os.path.join(DATA_DIR, "kohta_wind2.csv")
 
     jetted = pd.read_csv(infile_jetted)
     corona = pd.read_csv(infile_corona)
@@ -73,9 +73,9 @@ if __name__ == "__main__":
     df3["log10E_GeV"] = jetted["log10_e_nu"]
     df3["fluence_GeV"] = jetted["log10_F"]
 
-    df1.to_csv(os.path.join(DATA_DIR, "wind.csv"))
+    df1.to_csv(os.path.join(DATA_DIR, "wind_new.csv"))
     df2.to_csv(os.path.join(DATA_DIR, "corona.csv"))
-    df3.to_csv(os.path.join(DATA_DIR, "jet.csv"))
+    df3.to_csv(os.path.join(DATA_DIR, "jet_new.csv"))
 
     ax1.plot(
         jetted["log10_e_nu"],

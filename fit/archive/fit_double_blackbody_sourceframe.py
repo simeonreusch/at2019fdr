@@ -50,9 +50,11 @@ FITDIR = os.path.join("fit", "double_blackbody")
 GLOBAL_AV = 0.3643711523794127
 GLOBAL_RV = 4.2694173002543225
 
-REFIT = False
+FITMETHOD = "lm"
+
+REFIT = True
 FIT = 3
-INTERVALS = [0, 1, 2]
+INTERVALS = [0]
 EXTINCTIONFIT_INTERVAL = 4
 
 
@@ -250,13 +252,12 @@ for INTERVAL in INTERVALS:
         minimizer = Minimizer(
             minimizer_fcn, params, fcn_args=(x, data, data_err), fcn_kws=None
         )
-        out = minimizer.minimize(method="basinhopping")
+        out = minimizer.minimize(method=FITMETHOD)
         print(report_fit(out.params))
 
         temp1 = out.params["temp1"].value
         scale1 = out.params["scale1"].value
-        # temp2 = out.params["temp2"].value
-        # scale2 = out.params["scale2"].value
+
         if "extinction_av" in out.params.keys():
             extinction_av = out.params["extinction_av"].value
         else:
@@ -291,15 +292,6 @@ for INTERVAL in INTERVALS:
             fitresult = json.load(infile)
 
     wavelengths, frequencies = utilities.get_wavelengths_and_frequencies()
-    # logflux_nu1 = np.log(frequencies.value) * alpha1 + scale1
-    # logflux_nu2 = np.log(frequencies.value) * alpha2 + scale2
-    # flux_nu1 = np.exp(logflux_nu1)
-    # flux_nu2 = np.exp(logflux_nu2)
-    # flux_nu = flux_nu1 + flux_nu2
-
-    # fitted_total_spectrum = sncosmo_spectral_v13.Spectrum(
-    #     wave=wavelengths, flux=flux_nu, unit=FNU
-    # )
 
     if INTERVAL == EXTINCTIONFIT_INTERVAL:
         extinction_av = fitresult["extinction_av"]

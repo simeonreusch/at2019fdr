@@ -12,7 +12,7 @@ from astropy.io import fits
 import astropy.units as u
 from datetime import date
 from scipy.interpolate import UnivariateSpline
-from modelSED import sncosmo_spectral_v13
+from modelSED import sncosmo_spectral_v13, utilities
 import sncosmo
 
 FNU = u.erg / (u.cm ** 2 * u.s * u.Hz)
@@ -149,54 +149,62 @@ flux_tns_with_h = sncosmo_spectral_v13.Spectrum(
 flux_tns_without_h = sncosmo_spectral_v13.Spectrum(
     wave=wl_spline, flux=spline4(wl_spline_new) - 0.02, unit=FNU
 )
+print(flux_tns_with_h)
+print(flux_tns_without_h)
+
+abmag_tns_with_h_g = utilities.magnitude_in_band("P48+ZTF_g", flux_tns_with_h)
+abmag_tns_without_h_g = utilities.magnitude_in_band("P48+ZTF_g", flux_tns_without_h)
+
+flux_with_h = utilities.abmag_to_flux(abmag_tns_with_h_g)
+flux_without_h = utilities.abmag_to_flux(abmag_tns_without_h_g)
+
+print(flux_with_h / flux_without_h)
+# ab = sncosmo.get_magsystem("ab")
+
+# bp_g = sncosmo_spectral_v13.read_bandpass("bandpasses/csv/g_mod.csv")
+# bp_r = sncosmo_spectral_v13.read_bandpass("bandpasses/csv/r_mod.csv")
+# bp_i = sncosmo_spectral_v13.read_bandpass("bandpasses/csv/i_mod.csv")
+# zp_flux_g = ab.zpbandflux("ztfg")
+# zp_flux_r = ab.zpbandflux("ztfr")
+# zp_flux_i = ab.zpbandflux("ztfi")
 
 
-ab = sncosmo.get_magsystem("ab")
+# bandflux_g_tns_with_h = flux_tns_with_h.bandflux(bp_g) / zp_flux_g
+# bandflux_r_tns_with_h = flux_tns_with_h.bandflux(bp_r) / zp_flux_r
+# bandflux_i_tns_with_h = flux_tns_with_h.bandflux(bp_i) / zp_flux_i
 
-bp_g = sncosmo_spectral_v13.read_bandpass("bandpasses/csv/g_mod.csv")
-bp_r = sncosmo_spectral_v13.read_bandpass("bandpasses/csv/r_mod.csv")
-bp_i = sncosmo_spectral_v13.read_bandpass("bandpasses/csv/i_mod.csv")
-zp_flux_g = ab.zpbandflux("ztfg")
-zp_flux_r = ab.zpbandflux("ztfr")
-zp_flux_i = ab.zpbandflux("ztfi")
-
-
-bandflux_g_tns_with_h = flux_tns_with_h.bandflux(bp_g) / zp_flux_g
-bandflux_r_tns_with_h = flux_tns_with_h.bandflux(bp_r) / zp_flux_r
-bandflux_i_tns_with_h = flux_tns_with_h.bandflux(bp_i) / zp_flux_i
-
-bandflux_g_tns_without_h = flux_tns_without_h.bandflux(bp_g) / zp_flux_g
-bandflux_r_tns_without_h = flux_tns_without_h.bandflux(bp_r) / zp_flux_r
-bandflux_i_tns_without_h = flux_tns_without_h.bandflux(bp_i) / zp_flux_i
+# bandflux_g_tns_without_h = flux_tns_without_h.bandflux(bp_g) / zp_flux_g
+# bandflux_r_tns_without_h = flux_tns_without_h.bandflux(bp_r) / zp_flux_r
+# bandflux_i_tns_without_h = flux_tns_without_h.bandflux(bp_i) / zp_flux_i
 
 
-ratio_g_tns = bandflux_g_tns_with_h / bandflux_g_tns_without_h
-ratio_r_tns = bandflux_r_tns_with_h / bandflux_r_tns_without_h
-ratio_i_tns = bandflux_i_tns_with_h / bandflux_i_tns_without_h
+# ratio_g_tns = bandflux_g_tns_with_h / bandflux_g_tns_without_h
+# ratio_r_tns = bandflux_r_tns_with_h / bandflux_r_tns_without_h
+# ratio_i_tns = bandflux_i_tns_with_h / bandflux_i_tns_without_h
 
-print(ratio_g_tns)
-print(ratio_r_tns)
-print(ratio_i_tns)
+# print(ratio_g_tns)
+# print(ratio_r_tns)
+# print(ratio_i_tns)
 
 
-ztf_filters = {"g": [4086, 5521], "r": [5600, 7316], "i": [7027, 8883]}
-ztf_colors = {"g": "green", "r": "red", "i": "orange"}
+# ztf_filters = {"g": [4086, 5521], "r": [5600, 7316], "i": [7027, 8883]}
+# ztf_colors = {"g": "green", "r": "red", "i": "orange"}
 
-plt.ylabel(r"$F_{\nu}$", fontsize=big_fontsize)
+# plt.ylabel(r"$F_{\nu}$", fontsize=big_fontsize)
 
-for band in ["g", "r", "i"]:
-    ax1.axvspan(
-        ztf_filters[band][0],
-        ztf_filters[band][1],
-        alpha=0.3,
-        color=ztf_colors[band],
-    )
+# for band in ["g", "r", "i"]:
+#     ax1.axvspan(
+#         ztf_filters[band][0],
+#         ztf_filters[band][1],
+#         alpha=0.3,
+#         color=ztf_colors[band],
+#     )
 
-rslim = ax1.get_xlim()
-ax1.set_xlabel(r"Observed Wavelength [$\rm \AA$]", fontsize=big_fontsize)
-ax1.tick_params(axis="both", which="major", labelsize=big_fontsize)
-plt.tight_layout()
+# rslim = ax1.get_xlim()
+# ax1.set_xlabel(r"Observed Wavelength [$\rm \AA$]", fontsize=big_fontsize)
+# ax1.tick_params(axis="both", which="major", labelsize=big_fontsize)
+# plt.tight_layout()
 
-filename = os.path.join(plot_folder, "h_modeling.png")
+# filename = os.path.join(plot_folder, "h_modeling.png")
 
-plt.savefig(filename)
+# plt.savefig(filename)

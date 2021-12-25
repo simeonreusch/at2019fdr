@@ -16,6 +16,7 @@ from modelSED import utilities, sncosmo_spectral_v13
 from modelSED.utilities import FNU
 from matplotlib.patches import ConnectionPatch, Polygon
 import matplotlib
+from lmfit import Parameters
 
 pd.options.mode.chained_assignment = None
 
@@ -73,30 +74,20 @@ def create_sed(ax, epoch):
     )
     df_cut["telescopeband"] = df_cut["telescope"] + "+" + df["band"]
 
-    fitparams_infile = os.path.join(FITDIR, f"{epoch}_fitparams_all.json")
-    with open(fitparams_infile) as infile:
-        params = json.load(infile)
+    p = Parameters()
+    with open(
+        os.path.join("fit", "double_blackbody_3.1", f"epoch{epoch}.json"), "r"
+    ) as f:
+        params = p.load(f)
+
+    # params["temp1"] = 13526
+    # print(params["temp1"])
+    # print(params["scale1"])
+    # quit()
 
     fitted_spectrum_1, bolo_flux_1 = utilities.blackbody_spectrum(
         temperature=params["temp1"],
         scale=params["scale1"],
-        extinction_av=GLOBAL_AV,
-        extinction_rv=GLOBAL_RV,
-        redshift=REDSHIFT,
-        get_bolometric_flux=True,
-    )
-
-    fitted_spectrum_1_lower, bolo_flux_1_lower = utilities.blackbody_spectrum(
-        temperature=params["temp1"] - params["temp1_err"],
-        scale=params["scale1"] + params["scale1_err"],
-        extinction_av=GLOBAL_AV,
-        extinction_rv=GLOBAL_RV,
-        redshift=REDSHIFT,
-        get_bolometric_flux=True,
-    )
-    fitted_spectrum_1_upper, bolo_flux_1_upper = utilities.blackbody_spectrum(
-        temperature=params["temp1"] + params["temp1_err"],
-        scale=params["scale1"] - params["scale1_err"],
         extinction_av=GLOBAL_AV,
         extinction_rv=GLOBAL_RV,
         redshift=REDSHIFT,
@@ -111,34 +102,18 @@ def create_sed(ax, epoch):
         redshift=REDSHIFT,
         get_bolometric_flux=True,
     )
-    fitted_spectrum_2_lower, bolo_flux_2_lower = utilities.blackbody_spectrum(
-        temperature=params["temp2"] - params["temp2_err"],
-        scale=params["scale2"] + params["scale2_err"],
-        extinction_av=GLOBAL_AV,
-        extinction_rv=GLOBAL_RV,
-        redshift=REDSHIFT,
-        get_bolometric_flux=True,
-    )
-    fitted_spectrum_2_upper, bolo_flux_2_upper = utilities.blackbody_spectrum(
-        temperature=params["temp2"] + params["temp2_err"],
-        scale=params["scale2"] - params["scale2_err"],
-        extinction_av=GLOBAL_AV,
-        extinction_rv=GLOBAL_RV,
-        redshift=REDSHIFT,
-        get_bolometric_flux=True,
-    )
 
     combined_flux = fitted_spectrum_1.flux + fitted_spectrum_2.flux
 
     # # # Calculate luminosity
-    luminosity_1, _, radius1, _ = utilities.calculate_bolometric_luminosity(
+    luminosity_1, radius1 = utilities.calculate_bolometric_luminosity(
         temperature=params["temp1"],
         scale=params["scale1"],
         redshift=REDSHIFT,
         temperature_err=None,
         scale_err=None,
     )
-    luminosity_2, _, radius2, _ = utilities.calculate_bolometric_luminosity(
+    luminosity_2, radius2 = utilities.calculate_bolometric_luminosity(
         temperature=params["temp2"],
         scale=params["scale2"],
         redshift=REDSHIFT,
@@ -155,9 +130,10 @@ def create_sed(ax, epoch):
     )
 
     ax.text(
-        0.6e14,
-        1.35e-12,
-        rf"L = {total_luminosity.value:.1e} erg/s",
+        0.58e14,
+        1.67e-12,
+        # rf"L = {total_luminosity.value:.1e} erg/s",
+        r"$L_{\mathrm{O+UV}}$ = " + f"{luminosity_1.value:.1e} erg/s",
         bbox=bbox,
         fontsize=SMALL_FONTSIZE,
     )
@@ -181,10 +157,6 @@ def create_sed(ax, epoch):
         combined_spectrum.flux * utilities.lambda_to_nu(combined_spectrum.wave),
         color="black",
     )
-
-    # ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_1.wave), y2=fitted_spectrum_1_lower.flux * utilities.lambda_to_nu(fitted_spectrum_1_lower.wave), y1=fitted_spectrum_1_upper.flux * utilities.lambda_to_nu(fitted_spectrum_1_upper.wave), alpha=0.3, facecolor="tab:blue")
-
-    # ax.fill_between(x=utilities.lambda_to_nu(fitted_spectrum_2.wave), y2=fitted_spectrum_2_lower.flux * utilities.lambda_to_nu(fitted_spectrum_2_lower.wave), y1=fitted_spectrum_2_upper.flux * utilities.lambda_to_nu(fitted_spectrum_2_upper.wave), alpha=0.3, facecolor="tab:red")
 
     telescopebands = [
         "WISE+W2",
@@ -234,7 +206,7 @@ def create_sed(ax, epoch):
 
     df_erosita_ulims = pd.read_csv(os.path.join(LC_DIR, "erosita_ulims.csv"))
     y = df_erosita_ulims.flux
-    yerr = y / 10
+    yerr = y / 5
 
     lc_ax1.errorbar(
         x=df_erosita_ulims.obsmjd,
@@ -269,10 +241,13 @@ def create_sed(ax, epoch):
             edgecolor="gray",
         )
         ax.set_xlabel("Frequency (Hz)", fontsize=BIG_FONTSIZE - 2)
-    # ax2 = ax.secondary_xaxis(
-    #     "top", functions=(utilities.nu_to_ev, utilities.ev_to_nu)
-    # )
-    # ax2.set_xlabel(r"Energy [eV]")
+
+    lumi = lambda flux: flux * 4 * np.pi * d ** 2
+    flux = lambda lumi: lumi / (4 * np.pi * d ** 2)
+    ax2 = ax.secondary_yaxis("right", functions=(lumi, flux))
+
+    if epoch != 2:
+        ax2.set_ticks([])
 
     ax.grid(which="both", alpha=0.15)
 
@@ -285,8 +260,8 @@ if __name__ == "__main__":
     SMALL_FONTSIZE = 8
     DPI = 400
     GOLDEN_RATIO = 1 / 1.618
-    GLOBAL_AV = 0.3643711523794127
-    GLOBAL_RV = 4.2694173002543225
+    GLOBAL_AV = 0.4502
+    GLOBAL_RV = 3.1
 
     H_CORRECTION_I_BAND = 1.0495345056821688
 
@@ -335,7 +310,8 @@ if __name__ == "__main__":
     sed3 = fig.add_subplot(2, 3, 3)
 
     sed_xlims = [5e13, 2e15]
-    sed_ylims = [6e-14, 2e-12]
+    # sed_ylims = [7e-14, 3e-12]
+    sed_ylims = [9e-14, 2.3e-12]
 
     def set_scales(ax):
         ax.set_xscale("log")
@@ -348,14 +324,11 @@ if __name__ == "__main__":
     for sed in [sed1, sed2, sed3]:
         set_scales(sed)
 
-    # sed1.set_ylabel(r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]"))
     sed2.axes.yaxis.set_ticks([])
     sed3.axes.yaxis.set_ticks([])
 
     lc_ax1.set_yscale("log")
-    # lc_ylim = [5e-14, 2e-12]
     lc_ylim = [1.5e-14, 2e-12]
-    # lc_ylim = [1e-14, 2e-12]
     lc_ax1.set_ylim(lc_ylim)
 
     lc_ax1.errorbar(
@@ -380,7 +353,7 @@ if __name__ == "__main__":
     )
 
     if flabel_sel == "filterlabel_with_wl":
-        label = "eROSITA (0.3-2 keV)"
+        label = "eROSITA (0.2-2 keV)"
     else:
         label = "SRG eROSITA"
 
@@ -438,7 +411,7 @@ if __name__ == "__main__":
     )
     bbox = dict(boxstyle="round", fc="w", ec="gray")
     lc_ax1.text(
-        t_neutrino.mjd - 94,
+        t_neutrino.mjd - 99,
         1.25e-13,
         "Neutrino",
         # rotation="vertical",
@@ -451,7 +424,7 @@ if __name__ == "__main__":
     lc_ax1.text(
         # 59310,
         # 4e-13,
-        58660,
+        58680,
         1.25e-13,
         "Dust echo",
         # rotation="vertical",

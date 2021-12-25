@@ -1,0 +1,32 @@
+temp1 min: 9703 K
+temp1 max: 22730 K
+
+temp2 min: 1859 K
+temp2 max: 2681 K
+
+scale1 min: 3.2312e+23
+scale1 max: 3.3368e+24
+
+scale2 min: 1.8999e+20
+scale2 max: 1.1334e+21
+
+----------
+[[Variables]]
+    temp1:   12518.8039 +/- 1241.82846 (9.92%) (init = 12518.1)
+    scale1:  7.6124e+23 +/- 2.2605e+23 (29.70%) (init = 7.6118e+23)
+    temp2:   2289.17474 +/- 120.634365 (5.27%) (init = 2289.212)
+    scale2:  5.1485e+20 +/- 1.3481e+20 (26.18%) (init = 5.1485e+20)
+[[Correlations]] (unreported correlations are < 0.100)
+    C(temp1, scale1)  =  0.995
+    C(temp2, scale2)  =  0.980
+    C(scale1, temp2)  =  0.831
+    C(temp1, temp2)   =  0.797
+    C(scale1, scale2) =  0.774
+    C(temp1, scale2)  =  0.741
+None
+lumi_from_boloflux 1: 1.36e+44 erg / s
+lumi_from_boloflux 2: 2.25e+44 erg / s
+lumi_from_boloflux comb: 3.62e+44 erg / s
+radius 1: 2.79e+15 cm
+radius 2: 1.07e+17 cm
+-------------------------

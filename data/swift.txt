@@ -1,0 +1,44 @@
+
+00011456015
+
+00011456001, 00011456002, 00011456003, 00011456004, 00011456005, 00011456006, 00011456007, 00011456008, 00011456009, 00011456010, 00011456011, 00011456012, 00011456013, 00011456014
+
+
+14 pre neutrino
+
+Counts/s
+0.000769
+
+Flux binned absorbed (galactic nH only, 4.17E+20)
+2.457E-14
+
+Flux binned unabsorbed (galactic nH only, 4.17E+20)
+5.425E-14
+
+Flux binned absorbed (galactic nH + intrinsic nH, 4.17E+20 and 0.146811E+22)
+2.255E-14
+
+Flux binned unabsorbed (galactic nH + intrinsic nH, 4.17E+20 and 0.146811E+22)
+1.980E-13
+
+REDONE 1.47E+21
+single:
+
+
+Flux binned absorbed (galactic nH + intrinsic nH, total: )
+2.399E-14
+
+Flux binned unabsorbed (galactic nH + intrinsic nH, total: )
+1.066E-13
+
+
+1 after neutrino
+
+Counts/s
+2.7093e-02
+
+Flux binned absorbed (galactic nH + intrinsic nH, 4.17E+20 and 0.146811E+22)
+7.943E-13
+
+Flux binned unabsorbed (galactic nH + intrinsic nH, 4.17E+20 and 0.146811E+22)
+6.974E-12

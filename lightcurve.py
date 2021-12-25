@@ -80,7 +80,7 @@ def plot_lightcurve(df, fluxplot=False):
 
     if fluxplot:
         plt.yscale("log")
-        ax1.set_ylim([1e-14, 2e-12])
+        ax1.set_ylim([1.7e-14, 1.7e-12])
 
     for instrband in cmap:
         telescope, band = instrband.split("+")
@@ -137,7 +137,7 @@ def plot_lightcurve(df, fluxplot=False):
     if fluxplot:
 
         if flabel_sel == "filterlabel_with_wl":
-            label = "XRT (0.3-10 keV)"
+            label = r"XRT (0.3--10 keV)"
         else:
             label = "Swift XRT"
 
@@ -155,7 +155,7 @@ def plot_lightcurve(df, fluxplot=False):
         )
 
         if flabel_sel == "filterlabel_with_wl":
-            label = "eROSITA (0.3-2 keV)"
+            label = r"eROSITA (0.3--2 keV)"
         else:
             label = "SRG eROSITA"
 
@@ -191,7 +191,7 @@ def plot_lightcurve(df, fluxplot=False):
         if flabel_sel == "filterlabel":
             label = "Fermi LAT"
         else:
-            label = "LAT (0.1-800 GeV)"
+            label = r"LAT (0.1--800 GeV)"
 
         ax1.errorbar(
             x=df_fermi_cut.obsmjd,
@@ -228,30 +228,31 @@ def plot_lightcurve(df, fluxplot=False):
 
     ax1.axvline(t_neutrino.mjd, linestyle=":", label="IC200530A", color="tab:red")
 
-    loc = (0.75, 0.75)
+    loc = (0.73, 0.75)
 
     if flabel_sel == "filterlabel":
         bbox = [1.105, 1.26]
         fontsize = 10
     else:
-        bbox = [1.13, 1.26]
+        bbox = [1.12, 1.26]
         fontsize = 9.8
 
     if flabel_sel == "filterlabel":
         ncol = 6
     else:
         ncol = 5
+
     ax1.legend(
         ncol=ncol,
         bbox_to_anchor=bbox,
         fancybox=True,
         shadow=False,
-        fontsize=fontsize,
+        fontsize=fontsize - 0.2,
         edgecolor="gray",
     )
 
     ax1.text(
-        t_neutrino.mjd - 94,
+        t_neutrino.mjd - 99,
         5e-14,
         "Neutrino",
         # rotation="vertical",
@@ -358,7 +359,7 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
     xerr = [np.asarray([x - 0.1e3]), np.asarray([x + 10e3])]
 
     if flabel_sel == "filterlabel_with_wl":
-        label = "XRT (0.3-10 keV)"
+        label = r"XRT (0.3--10 keV)"
     else:
         label = "Swift XRT"
 
