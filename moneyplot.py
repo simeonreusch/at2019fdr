@@ -27,17 +27,57 @@ filterlabel = utilities.load_info_json(flabel_sel)
 filter_wl = utilities.load_info_json("filter_wl")
 wl_filter = {v: k for k, v in filter_wl.items()}
 
-XRT_COLUMN = "flux0310_bb_25eV"
-nice_fonts = {
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": "Times New Roman",
-}
-matplotlib.rcParams.update(nice_fonts)
+matplotlib.rcParams["mathtext.fontset"] = "stix"
+matplotlib.rcParams["font.family"] = "serif"
+matplotlib.rcParams["font.serif"] = "Times New Roman"
 
-# MJD_INTERVALS = [[58700, 58720], [59023, 59043], [59110, 59130], [59220,59265]]
 MJD_INTERVALS = [[58700, 58720], [59006, 59130], [59220, 59271]]
 markers = {"WISE": "p", "P200": "s", "P48": ".", "Swift": "D"}
+
+markers_bandwise = {
+    "WISE+W1": "p",
+    "WISE+W2": "h",
+    "P200+Ks": "s",
+    "P200+H": "d",
+    "P200+J": "d",
+    "P48+ZTF_i": "s",
+    "P48+ZTF_r": "^",
+    "P48+ZTF_g": "o",
+    "Swift+U": "o",
+    "Swift+UVW1": "$\u2734$",
+    "Swift+UVM2": "D",
+    "Swift+UVW2": "v",
+}
+
+markersizes_bandwise = {
+    "WISE+W1": 6,
+    "WISE+W2": 6,
+    "P200+Ks": 4,
+    "P200+H": 5,
+    "P200+J": 7,
+    "P48+ZTF_i": 5,
+    "P48+ZTF_r": 5,
+    "P48+ZTF_g": 5,
+    "Swift+U": 5,
+    "Swift+UVW1": 5,
+    "Swift+UVM2": 5,
+    "Swift+UVW2": 5,
+}
+
+markerfill_bandwise = {
+    "WISE+W1": None,
+    "WISE+W2": None,
+    "P200+Ks": None,
+    "P200+H": None,
+    "P200+J": "none",
+    "P48+ZTF_i": "none",
+    "P48+ZTF_r": "none",
+    "P48+ZTF_g": None,
+    "Swift+U": "none",
+    "Swift+UVW1": "none",
+    "Swift+UVM2": "none",
+    "Swift+UVW2": "none",
+}
 
 
 def nu_to_ev(nu):
@@ -79,11 +119,6 @@ def create_sed(ax, epoch):
         os.path.join("fit", "double_blackbody_3.1", f"epoch{epoch}.json"), "r"
     ) as f:
         params = p.load(f)
-
-    # params["temp1"] = 13526
-    # print(params["temp1"])
-    # print(params["scale1"])
-    # quit()
 
     fitted_spectrum_1, bolo_flux_1 = utilities.blackbody_spectrum(
         temperature=params["temp1"],
@@ -149,7 +184,7 @@ def create_sed(ax, epoch):
         utilities.lambda_to_nu(fitted_spectrum_2.wave),
         fitted_spectrum_2.flux * utilities.lambda_to_nu(fitted_spectrum_2.wave),
         color="tab:red",
-        linestyle="dotted",
+        linestyle="dashed",
     )
 
     ax.plot(
@@ -188,7 +223,7 @@ def create_sed(ax, epoch):
 
         nu = utilities.lambda_to_nu(filter_wl[telescopeband])
 
-        markersizes = {"WISE": 5, "P200": 4, "P48": 8, "Swift": 4}
+        markersizes = {"WISE": 5 + 1, "P200": 4 + 1, "P48": 8 + 3, "Swift": 4 + 1}
 
         ax.errorbar(
             nu,
@@ -196,12 +231,29 @@ def create_sed(ax, epoch):
             flux_err * nu,
             color=cmap[telescopeband],
             label=filterlabel[telescopeband],
-            fmt=markers[telescope],
-            markersize=markersizes[telescope],
+            marker=markers_bandwise[telescopeband],
+            ms=markersizes_bandwise[telescopeband],
+            mfc=markerfill_bandwise[telescopeband],
         )
+        # else:
+        #     ax.errorbar(
+        #         nu,
+        #         flux * nu,
+        #         flux_err * nu,
+        #         color=cmap[telescopeband],
+        #         label=filterlabel[telescopeband],
+        #         fmt=markers[telescope],
+        #         markersize=markersizes[telescope],
+        #     )
 
     ax.errorbar(
-        1e14, 0, 1e-14, label="SRG eROSITA", fmt="D", markersize=markersizes["P200"]
+        1e14,
+        0,
+        1e-14,
+        label="SRG/eROSITA",
+        fmt="D",
+        markersize=markersizes["P200"],
+        color="darkcyan",
     )
 
     df_erosita_ulims = pd.read_csv(os.path.join(LC_DIR, "erosita_ulims.csv"))
@@ -220,7 +272,8 @@ def create_sed(ax, epoch):
     )
 
     if flabel_sel == "filterlabel":
-        legendpos = (2.634, 1.58)
+        # legendpos = (2.634, 1.58)
+        legendpos = (2.5, 1.58)
         fontsize = 8.6
     else:
         legendpos = (2.5, 1.58)
@@ -304,6 +357,7 @@ if __name__ == "__main__":
     fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH * GOLDEN_RATIO))
 
     plt.subplots_adjust(bottom=0.1, left=0.1, top=0.81, right=0.9)
+
     lc_ax1 = fig.add_subplot(2, 3, (4, 6))
     sed1 = fig.add_subplot(2, 3, 1)
     sed2 = fig.add_subplot(2, 3, 2)
@@ -382,8 +436,8 @@ if __name__ == "__main__":
         dustmodel_dict["mjds"],
         dustmodel_dict["convolution"],
         color="black",
-        ls="dotted",
-        lw=1.8,
+        ls="dashdot",
+        lw=1.5,
     )
 
     # lc_ax1.set_xlim([58570, 59460])
@@ -404,7 +458,7 @@ if __name__ == "__main__":
     t_neutrino = Time("2020-05-30T07:54:29.43", format="isot", scale="utc")
     lc_ax1.axvline(
         t_neutrino.mjd,
-        linestyle=":",
+        linestyle="dotted",
         label="IC200530A",
         color="tab:red",
         zorder=50,

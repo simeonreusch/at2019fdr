@@ -17,12 +17,9 @@ import matplotlib
 
 flabel_sel = "filterlabel_with_wl"
 
-nice_fonts = {
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": "Times New Roman",
-}
-matplotlib.rcParams.update(nice_fonts)
+matplotlib.rcParams["mathtext.fontset"] = "stix"
+matplotlib.rcParams["font.family"] = "serif"
+matplotlib.rcParams["font.serif"] = "Times New Roman"
 
 # MJD_INTERVALS = [[58700, 58720], [59023, 59043], [59110, 59130], [59220,59265]]
 MJD_INTERVALS = [[58700, 58720], [59006, 59130], [59220, 59271]]
@@ -57,23 +54,23 @@ def plot_lightcurve(df, fluxplot=False):
     fig = plt.figure(dpi=DPI, figsize=(FIG_WIDTH, FIG_WIDTH / GOLDEN_RATIO))
 
     config = {
-        "P48+ZTF_g": {"s": 3, "fmt": "o", "a": 0.5, "c": "g"},
-        "P48+ZTF_r": {"s": 3, "fmt": "o", "a": 0.5, "c": "r"},
-        "P48+ZTF_i": {"s": 3, "fmt": "o", "a": 0.5, "c": "orange"},
-        "Swift+U": {"s": 3, "fmt": "D", "a": 1, "c": "purple"},
-        "WISE+W1": {"s": 6, "fmt": "p", "a": 1, "c": "tab:blue"},
-        "WISE+W2": {"s": 6, "fmt": "p", "a": 1, "c": "tab:red"},
-        "P200+J": {"s": 5, "fmt": "s", "a": 1, "c": "black"},
-        "P200+H": {"s": 5, "fmt": "s", "a": 1, "c": "gray"},
-        "P200+Ks": {"s": 5, "fmt": "s", "a": 1, "c": "blue"},
-        "Swift+UVW1": {"s": 3, "fmt": "D", "a": 1, "c": "orchid"},
-        "Swift+UVW2": {"s": 3, "fmt": "D", "a": 1, "c": "m"},
+        "P48+ZTF_g": {"s": 3, "fmt": "o", "a": 0.5, "c": "g", "mfc": None},
+        "P48+ZTF_r": {"s": 3, "fmt": "^", "a": 0.5, "c": "r", "mfc": "none"},
+        "P48+ZTF_i": {"s": 3, "fmt": "s", "a": 0.5, "c": "orange", "mfc": "none"},
+        "Swift+U": {"s": 3, "fmt": "D", "a": 1, "c": "purple", "mfc": None},
+        "WISE+W1": {"s": 6, "fmt": "p", "a": 1, "c": "tab:blue", "mfc": None},
+        "WISE+W2": {"s": 6, "fmt": "h", "a": 1, "c": "tab:red", "mfc": None},
+        "P200+J": {"s": 5, "fmt": "d", "a": 1, "c": "black", "mfc": "none"},
+        "P200+H": {"s": 5, "fmt": "d", "a": 1, "c": "gray", "mfc": None},
+        "P200+Ks": {"s": 5, "fmt": "s", "a": 1, "c": "blue", "mfc": None},
+        "Swift+UVW1": {"s": 7, "fmt": "$\u2734$", "a": 1, "c": "orchid", "mfc": None},
+        "Swift+UVW2": {"s": 3, "fmt": "D", "a": 1, "c": "m", "mfc": None},
     }
 
     plt.subplots_adjust(bottom=0.12, top=0.85, left=0.11, right=0.9)
-    # plt.figure(dpi=DPI, figsize=(FIG_WIDTH, 2.5))
+
     filter_wl = utilities.load_info_json("filter_wl")
-    # ax1 = plt.subplot(111)
+
     ax1 = fig.add_subplot(14, 1, (2, 14))
 
     ax1.set_xlim([58580, 59480])
@@ -131,13 +128,14 @@ def plot_lightcurve(df, fluxplot=False):
                     marker=config[instrband]["fmt"],
                     ms=config[instrband]["s"],
                     alpha=config[instrband]["a"],
+                    mfc=config[instrband]["mfc"],
                     linestyle=" ",
                     label=filterlabel[instrband],
                 )
     if fluxplot:
 
         if flabel_sel == "filterlabel_with_wl":
-            label = r"XRT (0.3--10 keV)"
+            label = "XRT (0.3–10 keV)"
         else:
             label = "Swift XRT"
 
@@ -149,13 +147,13 @@ def plot_lightcurve(df, fluxplot=False):
             y=y,
             yerr=yerr,
             uplims=True,
-            fmt=fmt,
+            marker="x",
             color="darkviolet",
             label=label,
         )
 
         if flabel_sel == "filterlabel_with_wl":
-            label = r"eROSITA (0.3--2 keV)"
+            label = "eROSITA (0.3–2 keV)"
         else:
             label = "SRG eROSITA"
 
@@ -191,7 +189,7 @@ def plot_lightcurve(df, fluxplot=False):
         if flabel_sel == "filterlabel":
             label = "Fermi LAT"
         else:
-            label = r"LAT (0.1--800 GeV)"
+            label = "LAT (0.1–800 GeV)"
 
         ax1.errorbar(
             x=df_fermi_cut.obsmjd,
@@ -222,7 +220,7 @@ def plot_lightcurve(df, fluxplot=False):
         mag = lambda absmag: absmag + cosmo.distmod(REDSHIFT).value
         ax2 = ax1.secondary_yaxis("right", functions=(absmag, mag))
         ax2.tick_params(axis="both", which="major", labelsize=BIG_FONTSIZE)
-        ax2.set_ylabel(rf"Absolute Magnitude (z={REDSHIFT:.3f})", fontsize=BIG_FONTSIZE)
+        ax2.set_ylabel(f"Absolute Magnitude (z={REDSHIFT:.3f})", fontsize=BIG_FONTSIZE)
 
     t_neutrino = Time("2020-05-30T07:54:29.43", format="isot", scale="utc")
 
@@ -234,7 +232,8 @@ def plot_lightcurve(df, fluxplot=False):
         bbox = [1.105, 1.26]
         fontsize = 10
     else:
-        bbox = [1.12, 1.26]
+        # bbox = [1.12, 1.26]
+        bbox = [1.11, 1.26]
         fontsize = 9.8
 
     if flabel_sel == "filterlabel":
@@ -247,7 +246,7 @@ def plot_lightcurve(df, fluxplot=False):
         bbox_to_anchor=bbox,
         fancybox=True,
         shadow=False,
-        fontsize=fontsize - 0.2,
+        fontsize=fontsize + 0.2,
         edgecolor="gray",
     )
 
@@ -255,17 +254,12 @@ def plot_lightcurve(df, fluxplot=False):
         t_neutrino.mjd - 99,
         5e-14,
         "Neutrino",
-        # rotation="vertical",
-        # bbox=bbox,
         fontsize=BIG_FONTSIZE - 2,
         color="tab:red",
     )
 
-    # for interval in MJD_INTERVALS:
-    #     ax1.axvspan(interval[0], interval[1], alpha=0.2, color="gray")
-
     sns.despine(top=False, right=False)
-    # plt.tight_layout()
+
     if not fluxplot:
         outfile_pdf = "lightcurve_mag.pdf"
     else:
@@ -293,8 +287,6 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
     plt.yscale("log")
     plt.xscale("log")
 
-    # ax1.set_ylim([2e-18, 2e-11])
-    # ax1.set_xlim([1e-6, 4e12])
     ax1.set_ylim([1e-14, 2e-12])
     ax1.set_xlim([1e-1, 1e2])
 
@@ -307,10 +299,10 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
 
     ax1.set_xlabel("Energy [eV]", fontsize=SMALL_FONTSIZE)
     ax1.set_ylabel(
-        r"$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=SMALL_FONTSIZE + 2
+        "$\nu$ F$_\nu$ [erg s$^{-1}$ cm$^{-2}$]", fontsize=SMALL_FONTSIZE + 2
     )
-    ax2.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=SMALL_FONTSIZE + 2)
-    ax3.set_xlabel(r"Frequency [Hz]", fontsize=SMALL_FONTSIZE + 2)
+    ax2.set_ylabel("$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=SMALL_FONTSIZE + 2)
+    ax3.set_xlabel("Frequency [Hz]", fontsize=SMALL_FONTSIZE + 2)
 
     for instrband in cmap:
         telescope, band = instrband.split("+")
@@ -359,7 +351,7 @@ def plot_sed(mjd_bounds, title="sed_peak", log=False):
     xerr = [np.asarray([x - 0.1e3]), np.asarray([x + 10e3])]
 
     if flabel_sel == "filterlabel_with_wl":
-        label = r"XRT (0.3--10 keV)"
+        label = "XRT (0.3–10 keV)"
     else:
         label = "Swift XRT"
 
@@ -434,9 +426,6 @@ if __name__ == "__main__":
         "P200_sextractor+J",
         "P200_sextractor+H",
         "P200_sextractor+Ks",
-        # "Swift+UVW1",
-        # "Swift+UVW2",
-        # "Swift+U",
         "Swift+V",
         "Swift+B",
     ]
@@ -494,15 +483,7 @@ if __name__ == "__main__":
     cmap = utilities.load_info_json("cmap")
     filterlabel = utilities.load_info_json(flabel_sel)
 
-    # plot_lightcurve(df=df)
     plot_lightcurve(df=df, fluxplot=True)
-
-    # # titles = ["sed_1_peak", "sed_2_P200_epoch1", "sed_3_P200_epoch2", "sed_4_P200_epoch3"]
-
-    # titles = ["sed_1_peak", "sed_2_P200_epoch1", "sed_3_P200_epoch2"]
-
-    # for i, interval in enumerate(MJD_INTERVALS):
-    #     plot_sed(interval, title=titles[i])
 
     # Save lightcurve for further use
 

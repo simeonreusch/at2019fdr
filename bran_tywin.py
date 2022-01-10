@@ -68,10 +68,12 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
                 )
                 lumi = flux * 4 * np.pi * d ** 2
                 lumi_err = flux_err * 4 * np.pi * d ** 2
-                # y = flux
-                # yerr = flux_err
-                y = lumi
-                yerr = lumi_err
+                if FLUXPLOT:
+                    y = flux
+                    yerr = flux_err
+                else:
+                    y = lumi
+                    yerr = lumi_err
                 ax1.errorbar(
                     x=lc.obsmjd,
                     y=y,
@@ -84,14 +86,22 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
                 )
         i += 1
 
-    ax1.set_ylabel(r"$\nu$ L$_\nu$ [erg s$^{-1}$]", fontsize=BIG_FONTSIZE + 2)
+    if FLUXPLOT:
+        ax1.set_ylabel(
+            r"$\nu$ F$_\nu$ (erg s$^{-1}$ cm$^{-2}$)", fontsize=BIG_FONTSIZE + 2
+        )
+    else:
+        ax1.set_ylabel(r"$\nu$ L$_\nu$ (erg s$^{-1}$)", fontsize=BIG_FONTSIZE + 2)
 
     ax1.tick_params(axis="both", which="major", labelsize=BIG_FONTSIZE)
-    ax1.set_xlabel("Date [MJD]", fontsize=BIG_FONTSIZE + 2)
+    ax1.set_xlabel("Date (MJD)", fontsize=BIG_FONTSIZE + 2)
     ax1.grid(b=True, which="major", axis="both", alpha=0.33)
 
     ax1.set_xlim(58500, 59200)
-    ax1.set_ylim(2.7e41, 4.5e44)
+    if FLUXPLOT:
+        ax1.set_ylim(4e-14, 2e-12)
+    else:
+        ax1.set_ylim(2.7e41, 4.5e44)
 
     t_neutrino_tywin = Time("2020-05-30T07:54:29.43", format="isot", scale="utc")
     t_neutrino_bran = Time("2019-10-01T07:54:29.43", format="isot", scale="utc")
@@ -108,11 +118,15 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
     bboxes = [bbox_bran, bbox_tywin]
     neutrinos = ["IceCube-191001A", "IceCube-200530A"]
     pos = [-160, -90]
+    if FLUXPLOT:
+        pos1 = 5e-14
+    else:
+        pos1 = 3.25e41
     i = 0
     for time in times:
         ax1.annotate(
             neutrinos[i],
-            (pos[i] + time, 3.25e41),
+            (pos[i] + time, pos1),
             fontsize=ANNOTATION_FONTSIZE + 1,
             bbox=bboxes[i],
             color=colors[i],
@@ -123,9 +137,17 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
     sns.despine(top=False, right=False)
     plt.tight_layout()
 
+    if FLUXPLOT:
+        tywin_pos = [0.02, 0.26]
+        bran_pos = [0.02, 0.945]
+
+    else:
+        bran_pos = [0.02, 0.26]
+        tywin_pos = [0.02, 0.945]
+
     ax1.text(
-        0.02,
-        0.26,
+        bran_pos[0],
+        bran_pos[1],
         "AT2019dsg",
         transform=ax1.transAxes,
         fontsize=ANNOTATION_FONTSIZE + 1,
@@ -133,8 +155,8 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
         color="blue",
     )
     ax1.text(
-        0.02,
-        0.945,
+        tywin_pos[0],
+        tywin_pos[1],
         "AT2019fdr",
         transform=ax1.transAxes,
         fontsize=ANNOTATION_FONTSIZE + 1,
@@ -142,7 +164,10 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
         color="red",
     )
 
-    outpath = "bran_tywin_flux.png"
+    if FLUXPLOT:
+        outpath = "bran_tywin_flux.pdf"
+    else:
+        outpath = "bran_tywin_lumi.pdf"
     plt.savefig(os.path.join(PLOT_DIR, outpath))
 
     # percent_forced = (

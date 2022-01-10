@@ -43,7 +43,7 @@ def angstrom_to_ev(angstrom):
 
 
 def plot_lightcurve(
-    df_bran, df_tywin, df_lancel, plot_lumi=True, outpath="bran_tywin_lancel_lumi.png"
+    df_bran, df_tywin, df_lancel, plot_lumi=True, outpath="bran_tywin_lancel_lumi.pdf"
 ):
 
     df = df_bran
@@ -234,5 +234,5 @@ if __name__ == "__main__":
         df_tywin,
         df_lancel,
         plot_lumi=False,
-        outpath="bran_tywin_lancel_flux.png",
+        outpath="bran_tywin_lancel_flux.pdf",
     )
