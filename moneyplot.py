@@ -16,6 +16,7 @@ from modelSED import utilities, sncosmo_spectral_v13
 from modelSED.utilities import FNU
 from matplotlib.patches import ConnectionPatch, Polygon
 import matplotlib
+import matplotlib.colors as mcolors
 from lmfit import Parameters
 
 pd.options.mode.chained_assignment = None
@@ -44,7 +45,9 @@ markers_bandwise = {
     "P48+ZTF_r": "^",
     "P48+ZTF_g": "o",
     "Swift+U": "o",
-    "Swift+UVW1": "$\u2734$",
+    # "Swift+UVW1": "$\u2734$",
+    # "Swift+UVW1": "$\u2665$",#heart
+    "Swift+UVW1": "$\u2665$",
     "Swift+UVM2": "D",
     "Swift+UVW2": "v",
 }
@@ -59,7 +62,7 @@ markersizes_bandwise = {
     "P48+ZTF_r": 5,
     "P48+ZTF_g": 5,
     "Swift+U": 5,
-    "Swift+UVW1": 5,
+    "Swift+UVW1": 7,
     "Swift+UVM2": 5,
     "Swift+UVW2": 5,
 }
@@ -168,7 +171,7 @@ def create_sed(ax, epoch):
         0.58e14,
         1.67e-12,
         # rf"L = {total_luminosity.value:.1e} erg/s",
-        r"$L_{\mathrm{O+UV}}$ = " + f"{luminosity_1.value:.1e} erg/s",
+        "$L_{\mathrm{O+UV}}$ = " + f"{luminosity_1.value:.1e} erg s$^{{-1}}$",
         bbox=bbox,
         fontsize=SMALL_FONTSIZE,
     )
@@ -178,6 +181,7 @@ def create_sed(ax, epoch):
         fitted_spectrum_1.flux * utilities.lambda_to_nu(fitted_spectrum_1.wave),
         color="tab:blue",
         linestyle="dotted",
+        lw=1,
     )
 
     ax.plot(
@@ -185,12 +189,14 @@ def create_sed(ax, epoch):
         fitted_spectrum_2.flux * utilities.lambda_to_nu(fitted_spectrum_2.wave),
         color="tab:red",
         linestyle="dashed",
+        linewidth=1,
     )
 
     ax.plot(
         utilities.lambda_to_nu(combined_spectrum.wave),
         combined_spectrum.flux * utilities.lambda_to_nu(combined_spectrum.wave),
         color="black",
+        lw=1,
     )
 
     telescopebands = [
@@ -226,25 +232,19 @@ def create_sed(ax, epoch):
         markersizes = {"WISE": 5 + 1, "P200": 4 + 1, "P48": 8 + 3, "Swift": 4 + 1}
 
         ax.errorbar(
-            nu,
-            flux * nu,
-            flux_err * nu,
+            x=nu,
+            xerr=None,
+            y=flux * nu,
+            yerr=flux_err * nu,
             color=cmap[telescopeband],
+            mec=cmap[telescopeband],
+            mfc=cmap_rgba[telescopeband],
             label=filterlabel[telescopeband],
             marker=markers_bandwise[telescopeband],
             ms=markersizes_bandwise[telescopeband],
-            mfc=markerfill_bandwise[telescopeband],
+            linestyle=" ",
+            elinewidth=1,
         )
-        # else:
-        #     ax.errorbar(
-        #         nu,
-        #         flux * nu,
-        #         flux_err * nu,
-        #         color=cmap[telescopeband],
-        #         label=filterlabel[telescopeband],
-        #         fmt=markers[telescope],
-        #         markersize=markersizes[telescope],
-        #     )
 
     ax.errorbar(
         1e14,
@@ -333,6 +333,18 @@ if __name__ == "__main__":
     df["flux_density"] = utilities.abmag_to_flux(df.mag)
     df["flux_density_err"] = utilities.abmag_err_to_flux_err(df.mag, df.mag_err)
 
+    cmap_rgba = {}
+
+    for entry in cmap:
+        rgba = {entry: mcolors.to_rgba(cmap[entry])}
+        cmap_rgba.update(rgba)
+
+    for entry in markerfill_bandwise:
+        if markerfill_bandwise[entry] == "none":
+            temp = list(cmap_rgba[entry])
+            temp[-1] = 0.4
+            cmap_rgba.update({entry: tuple(temp)})
+
     fluxes = []
     flux_errs = []
     for row in df.iterrows():
@@ -392,6 +404,7 @@ if __name__ == "__main__":
         color=cmap["P48+ZTF_g"],
         marker=".",
         linestyle=" ",
+        elinewidth=1,
         label=filterlabel["P48+ZTF_g"],
     )
 
@@ -437,7 +450,7 @@ if __name__ == "__main__":
         dustmodel_dict["convolution"],
         color="black",
         ls="dashdot",
-        lw=1.5,
+        lw=1.0,
     )
 
     # lc_ax1.set_xlim([58570, 59460])

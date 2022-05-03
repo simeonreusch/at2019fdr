@@ -51,6 +51,8 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
     plt.yscale("log")
 
     colors = ["blue", "red"]
+    markers = [".", "s"]
+    size = [10, 5]
     i = 0
     redshifts = [REDSHIFT_BRAN, REDSHIFT_TYWIN]
 
@@ -79,10 +81,10 @@ def plot_lightcurve(df_bran, df_tywin, fluxplot=False):
                     y=y,
                     yerr=yerr,
                     color=colors[i],
-                    marker=".",
+                    marker=markers[i],
                     linestyle=" ",
                     label=filterlabel[instrband],
-                    markersize=10,
+                    markersize=size[i],
                 )
         i += 1
 

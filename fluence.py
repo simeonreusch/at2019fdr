@@ -26,7 +26,7 @@ GENERIC_COSMOLOGY = FlatLambdaCDM(H0=70, Om0=0.3)
 REDSHIFT = 0.267
 IC200530A_ENERGY = 4.915
 FIG_WIDTH = 6
-BIG_FONTSIZE = 14
+BIG_FONTSIZE = 13
 SMALL_FONTSIZE = 8
 GOLDEN_RATIO = 1.618
 DPI = 400
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     corona = pd.read_csv(infile_corona)
     wind = pd.read_csv(infile_wind)
 
-    plt.figure(dpi=DPI, figsize=(5, 4))
+    plt.figure(dpi=DPI, figsize=(5, 5 / GOLDEN_RATIO))
 
     ax1 = plt.subplot(111)
 

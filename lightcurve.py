@@ -14,6 +14,7 @@ from astropy import units as u
 from astropy.cosmology import Planck15 as cosmo
 from modelSED import utilities
 import matplotlib
+import matplotlib.colors as mcolors
 
 flabel_sel = "filterlabel_with_wl"
 
@@ -63,9 +64,24 @@ def plot_lightcurve(df, fluxplot=False):
         "P200+J": {"s": 5, "fmt": "d", "a": 1, "c": "black", "mfc": "none"},
         "P200+H": {"s": 5, "fmt": "d", "a": 1, "c": "gray", "mfc": None},
         "P200+Ks": {"s": 5, "fmt": "s", "a": 1, "c": "blue", "mfc": None},
-        "Swift+UVW1": {"s": 7, "fmt": "$\u2734$", "a": 1, "c": "orchid", "mfc": None},
+        "Swift+UVW1": {"s": 7, "fmt": "$\u2665$", "a": 1, "c": "orchid", "mfc": "none"},
         "Swift+UVW2": {"s": 3, "fmt": "D", "a": 1, "c": "m", "mfc": None},
     }
+
+    cmap_rgba = {}
+
+    for entry in cmap:
+        rgba = {entry: mcolors.to_rgba(cmap[entry])}
+        cmap_rgba.update(rgba)
+
+    for entry in config:
+        if config[entry]["mfc"] == "none":
+            temp = list(cmap_rgba[entry])
+            temp[-1] = 0.4
+            cmap_rgba.update({entry: tuple(temp)})
+
+    print(cmap_rgba)
+    # quit()
 
     plt.subplots_adjust(bottom=0.12, top=0.85, left=0.11, right=0.9)
 
@@ -125,10 +141,14 @@ def plot_lightcurve(df, fluxplot=False):
                     y=y,
                     yerr=yerr,
                     color=cmap[instrband],
+                    mec=cmap[instrband],
+                    mfc=cmap_rgba[instrband],
                     marker=config[instrband]["fmt"],
                     ms=config[instrband]["s"],
-                    alpha=config[instrband]["a"],
-                    mfc=config[instrband]["mfc"],
+                    # alpha=config[instrband]["a"],
+                    # mfc=config[instrband]["mfc"],
+                    elinewidth=0.7,
+                    mew=0.7,
                     linestyle=" ",
                     label=filterlabel[instrband],
                 )
@@ -150,6 +170,7 @@ def plot_lightcurve(df, fluxplot=False):
             marker="x",
             color="darkviolet",
             label=label,
+            elinewidth=0.8,
         )
 
         if flabel_sel == "filterlabel_with_wl":
@@ -165,6 +186,7 @@ def plot_lightcurve(df, fluxplot=False):
             ms=6,
             color="darkcyan",
             label=label,
+            elinewidth=0.8,
         )
 
         df_erosita_ulims = pd.read_csv(os.path.join(LC_DIR, "erosita_ulims.csv"))
@@ -180,6 +202,7 @@ def plot_lightcurve(df, fluxplot=False):
             fmt="D",
             ms=3,
             color="darkcyan",
+            elinewidth=0.8,
         )
 
         df_fermi_cut = df_fermi.query("obsmjd == 58799.5")
@@ -200,6 +223,7 @@ def plot_lightcurve(df, fluxplot=False):
             fmt=" ",
             color="turquoise",
             label=label,
+            elinewidth=0.8,
         )
 
     if not fluxplot:
